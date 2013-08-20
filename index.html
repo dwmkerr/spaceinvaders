@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Space Invaders</title>
+		<style>
+			body { 
+				margin: 0px;
+				padding: 0px;
+			}
+		</style>
+	</head>
+<body>
+	<canvas id="mainCanvas"></canvas>
+	<p id="gameOver"></p>
+	<p>Move Ship: Arrow Keys<br />
+		Fire: Space</p>
+	<script src="spaceinvaders.js"></script>
+	<script>
+		window.addEventListener("keydown", function keydown(e) {
+			var keycode;
+		    if (window.event) { 
+		    	keycode = window.event.keyCode;
+		    }
+		    else if (e) {
+		    	keycode = e.which;
+			}
+			switch(keycode){
+				case 37: //left
+					game.moveShip(-5);
+					break;
+        		case 38: //down
+        			break;
+        		case 39: //right
+					game.moveShip(5); 
+					break;
+        		case 40: //up
+        			break;
+        		case 32: //space
+        			game.shipFire();
+        			break;
+			}});
+
+		game.onGameLost = function onGameLost(game) {
+			document.getElementById("gameOver").innerText = "You Lost!";
+		};
+
+		game.onGameWon = function onGameWon(game) {
+			document.getElementById("gameOver").innerText = "You Won!";
+		};
+	</script>
+</body>
+</html>
