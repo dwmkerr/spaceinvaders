@@ -7,39 +7,55 @@
 				margin: 0px;
 				padding: 0px;
 			}
+			#starfield {
+				width:100%;
+				height:100%;
+				z-index: -1;
+				position: absolute;
+				left: 0px;
+				top: 0px;
+			}
+			#gamecontainer {
+				width: 800px;
+				margin-left: auto;
+				margin-right: auto;
+			}
+			#gamecanvas { 
+				width: 800px;
+				height: 600px;
+			}
 		</style>
 	</head>
 <body>
-	<canvas id="mainCanvas"></canvas>
+	<div id="starfield"></div>
+	<div id="gamecontainer">
+	<canvas id="gameCanvas"></canvas>
 	<p id="gameOver"></p>
 	<p>Move Ship: Arrow Keys<br />
 		Fire: Space</p>
+	</div>
+	<script src="starfield.js"></script>
 	<script src="spaceinvaders.js"></script>
 	<script>
-		window.addEventListener("keydown", function keydown(e) {
-			var keycode;
-		    if (window.event) { 
-		    	keycode = window.event.keyCode;
-		    }
-		    else if (e) {
-		    	keycode = e.which;
-			}
-			switch(keycode){
-				case 37: //left
-					game.moveShip(-5);
-					break;
-        		case 38: //down
-        			break;
-        		case 39: //right
-					game.moveShip(5); 
-					break;
-        		case 40: //up
-        			break;
-        		case 32: //space
-        			game.shipFire();
-        			break;
-			}});
 
+		//	Create the starfield.
+		var container = document.getElementById('starfield');
+		var starfield = new Starfield();
+		starfield.initialise(container);
+		starfield.start();
+
+		//	Setup the canvas.
+		var canvas = document.getElementById("gameCanvas");
+		canvas.width = 800;
+		canvas.height = 600;
+
+		//	Create the game.
+		var game = new Game();
+
+		//	Initialise it with the game canvas.
+		game.initialise(canvas);
+
+		//	Start the game.
 		game.onGameLost = function onGameLost(game) {
 			document.getElementById("gameOver").innerText = "You Lost!";
 		};
@@ -47,6 +63,44 @@
 		game.onGameWon = function onGameWon(game) {
 			document.getElementById("gameOver").innerText = "You Won!";
 		};
+		game.start();
+
+		//	Listen for keyboard events.
+		var pressedKeys = [];
+		window.addEventListener("keydown", function keydown(e) {
+			var keycode;
+		    if (window.event) { 
+		    	keycode = window.event.keyCode;
+		    }
+		    else if (e) {
+		    	keycode = e.which;
+		    }
+		    if(!pressedKeys[keycode])
+		    	pressedKeys[keycode] = true;
+
+		    if(pressedKeys[37]) /*left*/ {
+		    	game.moveShip(-5);
+		    	e.preventDefault();
+		    }
+		    if(pressedKeys[39]) /*right*/ {
+		    	game.moveShip(5);
+		    	e.preventDefault();
+		    }
+		    if(pressedKeys[32]) /*space*/ {
+        		game.shipFire();
+		    }
+		});
+		window.addEventListener("keyup", function keydown(e) {
+			var keycode;
+		    if (window.event) { 
+		    	keycode = window.event.keyCode;
+		    }
+		    else if (e) {
+		    	keycode = e.which;
+		    }
+		    if(pressedKeys[keycode])
+		    	delete pressedKeys[keycode];
+		});
 	</script>
 </body>
 </html>

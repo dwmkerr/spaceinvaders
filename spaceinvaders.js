@@ -22,82 +22,71 @@
 */
 
 //	Creates an instance of the Game class.
-function Game {
+function Game() {
 
 	//	Set the initial config.
 	this.config = {
 		rocketRate: 0.01,
 		bombTopVelocity: 25,
-		invaderInitialVelocity: 10,
-		invaderAcceleration: 4,
+		invaderInitialVelocity: 5,
+		invaderAcceleration: 0,
 		invaderDropDistance: 20,
 		rocketVelocity: 60,
-		rocketMaxFireRate: 3
+		rocketMaxFireRate: 3,
+		gameWidth: 400,
+		gameHeight: 300,
+		fps: 50,
+		debugMode: true
 	};
 
-	this.state = {
-		lives: 3
-		invaderCurrentVelocity: 10,
-		invaderCurrentDropDistance: 0,
-		invadersAreDropping: false,
-		gameCanvas: null
-	};
+	//	All state is in the variables below.
+	this.lives = 3;
+	this.invaderCurrentVelocity =  10;
+	this.invaderCurrentDropDistance =  0;
+	this.invadersAreDropping =  false;
+	this.gameCanvas =  null;
+	this.width = 0;
+	this.height = 0;
+	this.gameBound = {left: 0, top: 0, right: 0, bottom: 0};
+	this.intervalId = 0;
+
+	//	Game entities.
+	this.ship = null;
+	this.invaders = [];
+	this.rockets = [];
+	this.bombs = [];
 }
 
+//	Initialis the Game with a canvas.
 Game.prototype.initialise = function(gameCanvas) {
 
 	//	Set the game canvas.
-	this.state.gameCanvas = gameCanvas;
+	this.gameCanvas = gameCanvas;
+
+	//	Set the game width and height.
+	this.width = gameCanvas.width;
+	this.height = gameCanvas.height;
+
+	//	Set the state game bounds.
+	this.gameBounds = {
+		left: gameCanvas.width / 2 - this.config.gameWidth / 2,
+		right: gameCanvas.width / 2 + this.config.gameWidth / 2,
+		top: gameCanvas.height / 2 - this.config.gameHeight / 2,
+		bottom: gameCanvas.height / 2 + this.config.gameHeight / 2,
+	};
 };
 
-//	The main game object, holds the core data.
-var game = {
-	fps: 50,
-	width: 400,
-	height: 400,
-	playZoneMargin: {left:20, top: 20, right: 20, bottom: 60},
-	intervalId: null,
-	mainCanvas: document.getElementById("mainCanvas"),
-	lives: 3,						//	state
-	rocketRate: 0.01,				//	setting
-	bombTopVelocity: 25,			//	setting
-	invaderInitialVelocity: 10,		//	setting
-	invaderCurrentVelocity: 10,		//	state
-	invaderAcceleration: 4,			//	setting
-	invaderDropDistance: 20,		//	setting
-	invaderCurrentDropDistance: 0,	//	state
-	invadersAreDropping: false,		//	state
-	rocketVelocity: 60,				//	setting
-	rocketMaxFireRate: 3, 			//	setting
-	lastRocketTime: null
-};
-
-//	The main loop.
-game.gameLoop = function GameLoop() {
-	game.update();
-	game.draw();
-};
-
-//	Create the start function.
-game.start = function Start() {
-
-	//	Setup the canvas.
-	this.mainCanvas.width = this.width;
-	this.mainCanvas.height = this.height;
-
-	//	Create the stars.
-	var stars = [];
-	for(var i=0; i<100; i++) {
-		stars[i] = new Star(Math.random()*this.width, Math.random()*this.height, Math.random()*3+1, (Math.random()*5)+1);
-	}
-	this.stars = stars;
+//	Start the Game.
+Game.prototype.start = function() {
 
 	//	Create the ship.
-	this.ship = new Ship(this.width / 2, this.height - this.playZoneMargin.bottom);
+	this.ship = new Ship(this.width / 2, this.gameBounds.bottom);
 
 	//	We have no rockets and bombs by default.
 	this.rockets = [];
 	this.bombs = [];
+
+	//	TODO: make the 'block' configurable.
 
 	//	Create the invaders.
 	var ranks = 5;
@@ -107,38 +96,36 @@ game.start = function Start() {
 		for(var file = 0; file < files; file++) {
 			invaders.push(new Invader(
 				(this.width / 2) + ((files/2 - file) * 200 / files),
-				(100 - rank * 20),
+				(this.gameBounds.top + rank * 20),
 				rank, file, 'Invader'));
 		}
 	}
 	this.invaders = invaders;
-	this.invaderVelocity = {x: -this.invaderInitialVelocity, y:0};
+	this.invaderVelocity = {x: -this.config.invaderInitialVelocity, y:0};
 	this.invaderNextVelocity = null;
 
 	//	Start the game loop.
-	this.intervalId = setInterval(this.gameLoop, 1000 / this.fps);
+	var game = this;
+	this.intervalId = setInterval(function () { GameLoop(game);}, 1000 / this.fps);
+
+};
+
+//	The main loop.
+function GameLoop(game) {
+	game.update();
+	game.draw();
 };
 
 //	The stop function stops the game.
-game.stop = function Stop() {
+Game.prototype.stop = function Stop() {
 	clearInterval(this.intervalId);
 };
 
 //	The update function handles the updating of the state.
-game.update = function Update() {
+Game.prototype.update = function Update() {
 
 	//	The seconds that have passed.
-	var secs = this.fps / 1000;
-
-	//	Move each star.
-	for(var i=0; i<this.stars.length; i++) {
-		var star = this.stars[i];
-		star.y += secs * star.velocity;
-		//	If the star has moved from the bottom of the screen, spawn it at the top.
-		if(star.y > this.height) {
-			this.stars[i] = new Star(Math.random()*this.width, 0, Math.random()*3+1, Math.random()*5 + 1);
-		}
-	}
+	var secs = this.config.fps / 1000;
 
 	//	Move each bomb.
 	for(var i=0; i<this.bombs.length; i++) {
@@ -168,14 +155,14 @@ game.update = function Update() {
 		var invader = this.invaders[i];
 		var newx = invader.x + this.invaderVelocity.x * secs;
 		var newy = invader.y + this.invaderVelocity.y * secs;
-		if(hitLeft == false && newx < this.playZoneMargin.left) {
+		if(hitLeft == false && newx < this.gameBounds.left) {
 			hitLeft = true;
 		}
-		else if(hitRight == false && newx > this.width - this.playZoneMargin.right) {
+		else if(hitRight == false && newx > this.gameBounds.right) {
 			hitRight = true;
 		}
-		else if(hitBottom == false && newy > this.height - this.playZoneMargin.bottom) {
-			hitBotom = true;
+		else if(hitBottom == false && newy > this.gameBounds.bottom) {
+			hitBottom = true;
 		}
 
 		if(!hitLeft && !hitRight && !hitBottom) {
@@ -187,7 +174,7 @@ game.update = function Update() {
 	//	Update invader velocities.
 	if(this.invadersAreDropping) {
 		this.invaderCurrentDropDistance += this.invaderVelocity.y * secs;
-		if(this.invaderCurrentDropDistance >= this.invaderDropDistance) {
+		if(this.invaderCurrentDropDistance >= this.config.invaderDropDistance) {
 			this.invadersAreDropping = false;
 			this.invaderVelocity = this.invaderNextVelocity;
 			this.invaderCurrentDropDistance = 0;
@@ -195,14 +182,14 @@ game.update = function Update() {
 	}
 	//	If we've hit the left, move down then right.
 	if(hitLeft) {
-		this.invaderCurrentVelocity += this.invaderAcceleration;
+		this.invaderCurrentVelocity += this.config.invaderAcceleration;
 		this.invaderVelocity = {x: 0, y:this.invaderCurrentVelocity };
 		this.invadersAreDropping = true;
 		this.invaderNextVelocity = {x: this.invaderCurrentVelocity , y:0};
 	}
 	//	If we've hit the right, move down then left.
 	if(hitRight) {
-		this.invaderCurrentVelocity += this.invaderAcceleration;
+		this.invaderCurrentVelocity += this.config.invaderAcceleration;
 		this.invaderVelocity = {x: 0, y:this.invaderCurrentVelocity };
 		this.invadersAreDropping = true;
 		this.invaderNextVelocity = {x: -this.invaderCurrentVelocity , y:0};
@@ -239,7 +226,7 @@ game.update = function Update() {
 		var chance = this.rocketRate * secs;
 		if(chance > Math.random()) {
 			//	Fire!
-			this.bombs.push(new Bomb(invader.x, invader.y + invader.height / 2, Math.random()*this.bombTopVelocity + 10));
+			this.bombs.push(new Bomb(invader.x, invader.y + invader.height / 2, Math.random()*this.config.bombTopVelocity + 10));
 		}
 	}
 
@@ -284,25 +271,14 @@ game.update = function Update() {
 };
 
 //	The draw function handles the drawing of the state.
-game.draw = function Draw() {
+Game.prototype.draw = function () {
 
 	//	Get the drawing context.
-	var ctx = this.mainCanvas.getContext("2d");
+	var ctx = this.gameCanvas.getContext("2d");
 
-	//	Draw the background.
- 	ctx.fillStyle = '#000000';
- 	ctx.beginPath();
-	ctx.rect(0, 0, this.width, this.height);
-	ctx.closePath();
-	ctx.fill();
-
-	//	Draw stars.
-	for(var i=0; i<this.stars.length;i++) {
-		var star = this.stars[i];
-		ctx.fillStyle = '#ffffff';
-		ctx.fillRect(star.x, star.y, star.size, star.size);
-	}
-
+	//	Clear the background.
+	ctx.clearRect(0, 0, this.width, this.height);
+	
 	//	Draw ship.
 	ctx.fillStyle = '#999999';
 	ctx.fillRect(this.ship.x - (this.ship.width / 2), this.ship.y - (this.ship.height / 2), this.ship.width, this.ship.height);
@@ -332,47 +308,41 @@ game.draw = function Draw() {
 	ctx.font="14px Arial";
 	ctx.fillStyle = '#ffffff';
 	var info = "Lives: " + this.lives;
-	ctx.fillText(info, this.playZoneMargin.left, this.height - this.playZoneMargin.bottom / 2 + 14/2);
+	ctx.fillText(info, this.gameBounds.left, (this.height + this.gameBounds.bottom / 2) + 14/2);
+
+	//	If we're in debug mode, draw bounds.
+	if(this.config.debugMode) {
+		ctx.strokeStyle = '#ff0000';
+		ctx.strokeRect(0,0,this.width, this.height);
+		ctx.strokeRect(this.gameBounds.left, this.gameBounds.top, 
+			this.gameBounds.right - this.gameBounds.left, 
+			this.gameBounds.bottom - this.gameBounds.top);
+	}
 };
 
 //	Move the ship by (x,y) pixels.
-game.moveShip = function MoveShip(x, y) {
+Game.prototype.moveShip = function (x, y) {
 	this.ship.x += x;
-	if(this.ship.x < this.playZoneMargin.left) {
-		this.ship.x = this.playZoneMargin.left;
+	if(this.ship.x < this.gameBounds.left) {
+		this.ship.x = this.gameBounds.left;
 	}
-	if(this.ship.x > this.width - this.playZoneMargin.right) {
-		this.ship.x = this.width - this.playZoneMargin.right;
+	if(this.ship.x > this.gameBounds.right) {
+		this.ship.x = this.gameBounds.right;
 	}
 };
 
-game.shipFire = function ShipFire() {
+//	Fires a rocket from the ship.
+Game.prototype.shipFire = function () {
 
 	//	If we have no last rocket time, or the last rocket time 
 	//	is older than the max rocket rate, we can fire.
-	if(this.lastRocketTime == null || ((new Date()).valueOf() - this.lastRocketTime) > (1000 / this.rocketMaxFireRate))
+	if(this.lastRocketTime == null || ((new Date()).valueOf() - this.lastRocketTime) > (1000 / this.config.rocketMaxFireRate))
 	{	
 		//	Add a rocket.
-		this.rockets.push(new Rocket(this.ship.x, this.ship.y - 12, this.rocketVelocity));
+		this.rockets.push(new Rocket(this.ship.x, this.ship.y - 12, this.config.rocketVelocity));
 		this.lastRocketTime = (new Date()).valueOf();
 	}
 };
-
-//	Start the game.
-game.start();
-
-/*
-	Stars
-
-	Stars are a set of X points, with variable size. They slowly descend.
-
-*/
-function Star(x, y, size, velocity) {
-	this.x = x;
-	this.y = y; 
-	this.size = size;
-	this.velocity = velocity;
-}
 
 /*
  
