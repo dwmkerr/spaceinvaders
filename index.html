@@ -31,8 +31,6 @@
 	<div id="gamecontainer">
 	<canvas id="gameCanvas"></canvas>
 	<p id="gameOver"></p>
-	<p>Move Ship: Arrow Keys<br />
-		Fire: Space</p>
 	</div>
 	<script src="starfield.js"></script>
 	<script src="spaceinvaders.js"></script>
@@ -68,39 +66,31 @@
 		//	Listen for keyboard events.
 		var pressedKeys = [];
 		window.addEventListener("keydown", function keydown(e) {
-			var keycode;
-		    if (window.event) { 
-		    	keycode = window.event.keyCode;
-		    }
-		    else if (e) {
-		    	keycode = e.which;
-		    }
+			var keycode = window.event.keycode || e.which;
 		    if(!pressedKeys[keycode])
 		    	pressedKeys[keycode] = true;
-
-		    if(pressedKeys[37]) /*left*/ {
-		    	game.moveShip(-5);
+		    //	Supress further processing of left/right/space (37/29/32)
+		    if(keycode == 37 || keycode == 39 || keycode == 32) {
 		    	e.preventDefault();
-		    }
-		    if(pressedKeys[39]) /*right*/ {
-		    	game.moveShip(5);
-		    	e.preventDefault();
-		    }
-		    if(pressedKeys[32]) /*space*/ {
-        		game.shipFire();
 		    }
 		});
 		window.addEventListener("keyup", function keydown(e) {
-			var keycode;
-		    if (window.event) { 
-		    	keycode = window.event.keyCode;
-		    }
-		    else if (e) {
-		    	keycode = e.which;
-		    }
+			var keycode = window.event.keycode || e.which;
 		    if(pressedKeys[keycode])
 		    	delete pressedKeys[keycode];
 		});
+		setInterval(function() { 
+			//	If left/right/space keys are pressed, handle them.
+			if(pressedKeys[37]) {
+				game.moveShip(-1);
+			}
+			if(pressedKeys[39]) {
+				game.moveShip(1);
+			}
+			if(pressedKeys[32]) {
+				game.shipFire();
+			}
+		}, 10);
 	</script>
 </body>
 </html>

@@ -6,15 +6,14 @@ Classic Space Invaders game written in JavaScript as a learning exercise.
 TODO
 ----
 
-* Make bomb speeds configurable
 * Add configuration options to main page.
 * Allow pause.
-* Allow dev mode (show extra info)
-* scrollbars shouldn't be shown.
 * show instructions nicely
 * show 'start game'
 * show 'won' nicely
 * show 'lost' nicely
+* Scrollbars are goofy
+* Only the front rank of invaders should drop bombs
 
 TEST
 ----
@@ -29,3 +28,6 @@ TEST
 * Make the main page instantiate/start the game
 * Support move and fire at the same time.
 * support full size
+* Bombs aren't dropping
+* Make bomb speeds configurable
+* Allow dev mode (show extra info)

@@ -26,8 +26,9 @@ function Game() {
 
 	//	Set the initial config.
 	this.config = {
-		rocketRate: 0.01,
-		bombTopVelocity: 25,
+		bombRate: 0.01,
+		bombMinVelocity: 10,
+		bombMaxVelocity: 10,
 		invaderInitialVelocity: 5,
 		invaderAcceleration: 0,
 		invaderDropDistance: 20,
@@ -101,6 +102,7 @@ Game.prototype.start = function() {
 		}
 	}
 	this.invaders = invaders;
+	this.invaderCurrentVelocity = this.config.invaderInitialVelocity;
 	this.invaderVelocity = {x: -this.config.invaderInitialVelocity, y:0};
 	this.invaderNextVelocity = null;
 
@@ -125,7 +127,7 @@ Game.prototype.stop = function Stop() {
 Game.prototype.update = function Update() {
 
 	//	The seconds that have passed.
-	var secs = this.config.fps / 1000;
+	var secs = 1 / this.config.fps;
 
 	//	Move each bomb.
 	for(var i=0; i<this.bombs.length; i++) {
@@ -223,10 +225,11 @@ Game.prototype.update = function Update() {
 	//	Give each invader a chance to drop a bomb.
 	for(var i=0; i<this.invaders.length; i++) {
 		var invader = this.invaders[i];
-		var chance = this.rocketRate * secs;
+		var chance = this.config.bombRate * secs;
 		if(chance > Math.random()) {
 			//	Fire!
-			this.bombs.push(new Bomb(invader.x, invader.y + invader.height / 2, Math.random()*this.config.bombTopVelocity + 10));
+			this.bombs.push(new Bomb(invader.x, invader.y + invader.height / 2, 
+				this.config.bombMinVelocity + Math.random()*(this.config.bombMaxVelocity - this.config.bombMinVelocity)));
 		}
 	}
 
@@ -308,7 +311,7 @@ Game.prototype.draw = function () {
 	ctx.font="14px Arial";
 	ctx.fillStyle = '#ffffff';
 	var info = "Lives: " + this.lives;
-	ctx.fillText(info, this.gameBounds.left, (this.height + this.gameBounds.bottom / 2) + 14/2);
+	ctx.fillText(info, this.gameBounds.left, this.gameBounds.bottom + ((this.height - this.gameBounds.bottom) / 2) + 14/2);
 
 	//	If we're in debug mode, draw bounds.
 	if(this.config.debugMode) {
