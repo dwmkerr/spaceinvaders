@@ -30,7 +30,6 @@
 	<div id="starfield"></div>
 	<div id="gamecontainer">
 	<canvas id="gameCanvas"></canvas>
-	<p id="gameOver"></p>
 	</div>
 	<script src="starfield.js"></script>
 	<script src="spaceinvaders.js"></script>
@@ -54,13 +53,6 @@
 		game.initialise(canvas);
 
 		//	Start the game.
-		game.onGameLost = function onGameLost(game) {
-			document.getElementById("gameOver").innerText = "You Lost!";
-		};
-
-		game.onGameWon = function onGameWon(game) {
-			document.getElementById("gameOver").innerText = "You Won!";
-		};
 		game.start();
 
 		//	Listen for keyboard events.
@@ -73,24 +65,17 @@
 		    if(keycode == 37 || keycode == 39 || keycode == 32) {
 		    	e.preventDefault();
 		    }
+		    if(keycode == 80) /* pause */ {
+		    	game.togglePause();
+		    }
+		    game.keyDown(keycode);
 		});
 		window.addEventListener("keyup", function keydown(e) {
 			var keycode = window.event.keycode || e.which;
 		    if(pressedKeys[keycode])
 		    	delete pressedKeys[keycode];
+		    game.keyUp(keycode);
 		});
-		setInterval(function() { 
-			//	If left/right/space keys are pressed, handle them.
-			if(pressedKeys[37]) {
-				game.moveShip(-1);
-			}
-			if(pressedKeys[39]) {
-				game.moveShip(1);
-			}
-			if(pressedKeys[32]) {
-				game.shipFire();
-			}
-		}, 10);
 	</script>
 </body>
 </html>
