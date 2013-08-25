@@ -65,9 +65,6 @@
 		    if(keycode == 37 || keycode == 39 || keycode == 32) {
 		    	e.preventDefault();
 		    }
-		    if(keycode == 80) /* pause */ {
-		    	game.togglePause();
-		    }
 		    game.keyDown(keycode);
 		});
 		window.addEventListener("keyup", function keydown(e) {

@@ -6,22 +6,28 @@ Classic Space Invaders game written in JavaScript as a learning exercise.
 TODO
 ----
 
-* should be able to push/pop state, for example
-  the paused state could be a pushed state.
 * Add configuration options to main page.
 * show instructions nicely
-* show 'won' nicely
 * Scrollbars are goofy
+* gameover screen should have the score and maybe a share page
+* the countdown state is too fast.
+
+NEXT
+----
+
 * sounds
 * explosions
 * sprites?
 * handle 'block' of invaders configuration
-* handle levels
-* remove unneeded key handling code in index.
 
 TEST
 ----
 
+* remove unneeded key handling code in index.
+* Should be able to hold space for rockets.
+* handle levels
+* should be able to push/pop state, for example
+  the paused state could be a pushed state.
 * initial space on welcome screen fires a rocket
 * show 'start game'
 * show 'lost' nicely
