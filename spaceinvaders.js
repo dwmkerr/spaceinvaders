@@ -26,21 +26,21 @@ function Game() {
 
 	//	Set the initial config.
 	this.config = {
-		bombRate: 0.01,
-		bombMinVelocity: 10,
-		bombMaxVelocity: 10,
-		invaderInitialVelocity: 5,
+		bombRate: 0.05,
+		bombMinVelocity: 50,
+		bombMaxVelocity: 50,
+		invaderInitialVelocity: 25,
 		invaderAcceleration: 0,
 		invaderDropDistance: 20,
-		rocketVelocity: 60,
-		rocketMaxFireRate: 3,
+		rocketVelocity: 120,
+		rocketMaxFireRate: 2,
 		gameWidth: 400,
 		gameHeight: 300,
 		fps: 50,
 		debugMode: false,
 		invaderRanks: 5,
 		invaderFiles: 10,
-		shipSpeed: 20,
+		shipSpeed: 120,
 		levelDifficultyMultiplier: 0.2,
 		pointsPerInvader: 5
 	};
@@ -93,7 +93,7 @@ Game.prototype.start = function() {
 
 	//	Start the game loop.
 	var game = this;
-	this.intervalId = setInterval(function () { GameLoop(game);}, 1000 / this.fps);
+	this.intervalId = setInterval(function () { GameLoop(game);}, 1000 / this.config.fps);
 
 };
 
@@ -212,7 +212,10 @@ WelcomeState.prototype.draw = function(game, dt, ctx) {
 WelcomeState.prototype.keyDown = function(game, keyCode) {
 	if(keyCode == 32) /*space*/ {
 		//	Space starts the game.
-		game.moveToState(new LevelIntroState(1));
+		game.level = 1;
+		game.score = 0;
+		game.lives = 3;
+		game.moveToState(new LevelIntroState(game.level));
 	}
 };
 
@@ -235,7 +238,7 @@ GameOverState.prototype.draw = function(game, dt, ctx) {
 	ctx.textAlign="center"; 
 	ctx.fillText("Game Over!", game.width / 2, game.height/2 - 40);	
 	ctx.font="16px Arial";
-	ctx.fillText("You scored " + game.score, game.width / 2, game.height/2);
+	ctx.fillText("You scored " + game.score + " and got to level " + game.level, game.width / 2, game.height/2);
 	ctx.font="16px Arial";
 	ctx.fillText("Press 'Space' to play again.", game.width / 2, game.height/2 + 40);	
 };
@@ -243,7 +246,10 @@ GameOverState.prototype.draw = function(game, dt, ctx) {
 GameOverState.prototype.keyDown = function(game, keyCode) {
 	if(keyCode == 32) /*space*/ {
 		//	Space restarts the game.
-		game.moveToState(game.statePlay);
+		game.lives = 3;
+		game.score = 0;
+		game.level = 1;
+		game.moveToState(new LevelIntroState(1));
 	}
 };
 
@@ -468,7 +474,7 @@ PlayState.prototype.update = function(game, dt) {
 	}
 
 	//	Check for failure
-	if(this.lives <= 0) {
+	if(game.lives <= 0) {
 		game.moveToState(new GameOverState());
 	}
 
