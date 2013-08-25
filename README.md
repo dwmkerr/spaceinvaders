@@ -1,5 +1,5 @@
-spaceinvaders
-=============
+Space Invaders
+==============
 
 The classic Space Invaders game written in JavaScript as a learning exercise.
 No jQuery or any other third party libraries, just raw js/html.
@@ -22,6 +22,7 @@ Now add a canvas to the page.
 
 ````HTML
 <canvas id="gameCanvas"></canvas>
+````
 
 Finally, add the Space Invaders game code. You create the game, 
 intialise it with the canvas, start it and make sure you tell
