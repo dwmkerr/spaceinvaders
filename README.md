@@ -1,47 +1,66 @@
-spaceinvaders
-=============
+Space Invaders
+==============
 
-Classic Space Invaders game written in JavaScript as a learning exercise.
+The classic Space Invaders game written in JavaScript as a learning exercise.
+No jQuery or any other third party libraries, just raw js/html.
 
-TODO
-----
+See it Live: http://www.dwmkerr.com/experiments/spaceinvaders
 
-* should be able to push/pop state, for example
-  the paused state could be a pushed state.
-* Add configuration options to main page.
-* show instructions nicely
-* show 'won' nicely
-* Scrollbars are goofy
-* sounds
-* explosions
-* sprites?
-* handle 'block' of invaders configuration
-* handle levels
-* remove unneeded key handling code in index.
+Intro
+-----
 
-TEST
-----
+What's there to say? It's Space Invaders in JavaScript! Create the game, give it a 
+div to draw to, tell it when the keyboard is mashed and that's all you need to 
+add Space Invaders to a wesite.
 
-* initial space on welcome screen fires a rocket
-* show 'start game'
-* show 'lost' nicely
-* Allow pause.
-* game states (start, countdown, finish, dead, level etc)
-  can be controlled entirely by having the main loop call 
-  the state's update/draw proc.
-  demo this with a 'start' screen.
-* score for hitting invaders
-* Only the front rank of invaders should drop bombs
-* Handle loss by invaders reaching bottom (not ship collision!)
-* Make rocket speeds configurable.
-* Limit to rocket rate.
-* refactor settings and state.
-* separate the starfield so that it can fill the screen
-  and draw on its own canvas at a much lower framerate (stars
-  will move more slowly).
-* Make the main page instantiate/start the game
-* Support move and fire at the same time.
-* support full size
-* Bombs aren't dropping
-* Make bomb speeds configurable
-* Allow dev mode (show extra info)
+Adding Space Invaders to a Web Page
+-----------------------------------
+
+First, drop the spaceinvaders.js file into the website.
+
+Now add a canvas to the page.
+
+````HTML
+<canvas id="gameCanvas"></canvas>
+````
+
+Finally, add the Space Invaders game code. You create the game, 
+intialise it with the canvas, start it and make sure you tell
+it when a key is pressed or released. That's it!
+
+````HTML
+<script>
+//	Setup the canvas.
+var canvas = document.getElementById("gameCanvas");
+canvas.width = 800;
+canvas.height = 600;
+
+//	Create the game.
+var game = new Game();
+
+//	Initialise it with the game canvas.
+game.initialise(canvas);
+
+//	Start the game.
+game.start();
+
+//	Listen for keyboard events.
+var pressedKeys = [];
+window.addEventListener("keydown", function keydown(e) {
+	var keycode = window.event.keycode || e.which;
+    if(!pressedKeys[keycode])
+    	pressedKeys[keycode] = true;
+    //	Supress further processing of left/right/space (37/29/32)
+    if(keycode == 37 || keycode == 39 || keycode == 32) {
+    	e.preventDefault();
+    }
+    game.keyDown(keycode);
+});
+window.addEventListener("keyup", function keydown(e) {
+	var keycode = window.event.keycode || e.which;
+    if(pressedKeys[keycode])
+    	delete pressedKeys[keycode];
+    game.keyUp(keycode);
+});
+</script>
+````
