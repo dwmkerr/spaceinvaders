@@ -6,6 +6,8 @@ No jQuery or any other third party libraries, just raw js/html.
 
 See it Live: http://www.dwmkerr.com/experiments/spaceinvaders
 
+![Space Invaders Screenshot](http://www.dwmkerr.com/experiments/spaceinvaders/screenshot.jpg "Space Invaders Screenshot")
+
 Intro
 -----
 
