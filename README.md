@@ -66,3 +66,10 @@ window.addEventListener("keyup", function keydown(e) {
 });
 </script>
 ````
+
+References
+----------
+
+Other bits and peices that are uesful can be dropped here.
+
+ * The sounds came from http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
