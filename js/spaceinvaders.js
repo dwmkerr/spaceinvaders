@@ -52,7 +52,7 @@ function Game() {
 	this.gameBound = {left: 0, top: 0, right: 0, bottom: 0};
 	this.intervalId = 0;
 	this.score = 0;
-	this.level = 1
+	this.level = 1;
 
 	//	The state stack.
 	this.stateStack = [];
@@ -60,6 +60,9 @@ function Game() {
 	//	Input/output
 	this.pressedKeys = {};
 	this.gameCanvas =  null;
+
+	//	All sounds.
+	this.sounds = null;
 }
 
 //	Initialis the Game with a canvas.
@@ -117,12 +120,12 @@ function GameLoop(game) {
 		//	if we have a draw function.
 		if(currentState.update) {
 			currentState.update(game, dt);
-		} 
+		}
 		if(currentState.draw) {
 			currentState.draw(game, dt, ctx);
 		}
 	}
-};
+}
 
 Game.prototype.moveToState = function(state) {
 
@@ -188,6 +191,16 @@ Game.prototype.keyUp = function(keyCode) {
 function WelcomeState() {
 
 }
+
+WelcomeState.prototype.enter = function(game) {
+
+	// Create and load the sounds.
+	game.sounds = new Sounds();
+	game.sounds.init();
+	game.sounds.loadSound('shoot', 'sounds/shoot.wav');
+	game.sounds.loadSound('bang', 'sounds/bang.wav');
+	game.sounds.loadSound('explosion', 'sounds/explosion.wav');
+};
 
 WelcomeState.prototype.update = function (game, dt) {
 
@@ -262,13 +275,14 @@ function PlayState(config, level) {
 	this.invaderCurrentVelocity =  10;
 	this.invaderCurrentDropDistance =  0;
 	this.invadersAreDropping =  false;
+	this.lastRocketTime = null;
 
 	//	Game entities.
 	this.ship = null;
 	this.invaders = [];
 	this.rockets = [];
 	this.bombs = [];
-};
+}
 
 PlayState.prototype.enter = function(game) {
 
@@ -342,7 +356,7 @@ PlayState.prototype.update = function(game, dt) {
 	}
 
 	//	Move each rocket.
-	for(var i=0; i<this.rockets.length; i++) {
+	for(i=0; i<this.rockets.length; i++) {
 		var rocket = this.rockets[i];
 		rocket.y -= dt * rocket.velocity;
 
@@ -354,7 +368,7 @@ PlayState.prototype.update = function(game, dt) {
 
 	//	Move the invaders.
 	var hitLeft = false, hitRight = false, hitBottom = false;
-	for(var i=0; i<this.invaders.length; i++) {
+	for(i=0; i<this.invaders.length; i++) {
 		var invader = this.invaders[i];
 		var newx = invader.x + this.invaderVelocity.x * dt;
 		var newy = invader.y + this.invaderVelocity.y * dt;
@@ -403,7 +417,7 @@ PlayState.prototype.update = function(game, dt) {
 	}
 	
 	//	Check for rocket/invader collisions.
-	for(var i=0; i<this.invaders.length; i++) {
+	for(i=0; i<this.invaders.length; i++) {
 		var invader = this.invaders[i];
 		var bang = false;
 
@@ -423,6 +437,7 @@ PlayState.prototype.update = function(game, dt) {
 		}
 		if(bang) {
 			this.invaders.splice(i--, 1);
+			game.sounds.playSound('bang');
 		}
 	}
 
@@ -457,6 +472,7 @@ PlayState.prototype.update = function(game, dt) {
 				bomb.y >= (this.ship.y - this.ship.height/2) && bomb.y <= (this.ship.y + this.ship.height/2)) {
 			this.bombs.splice(i--, 1);
 			game.lives--;
+			game.sounds.playSound('explosion');
 		}
 				
 	}
@@ -470,6 +486,7 @@ PlayState.prototype.update = function(game, dt) {
 			(invader.y - invader.height/2) < (this.ship.y + this.ship.height/2)) {
 			//	Dead by collision!
 			game.lives = 0;
+			game.sounds.playSound('explosion');
 		}
 	}
 
@@ -479,7 +496,7 @@ PlayState.prototype.update = function(game, dt) {
 	}
 
 	//	Check for victory
-	if(this.invaders.length == 0) {
+	if(this.invaders.length === 0) {
 		game.score += this.level * 50;
 		game.level += 1;
 		game.moveToState(new LevelIntroState(game.level));
@@ -531,8 +548,8 @@ PlayState.prototype.draw = function(game, dt, ctx) {
 	if(this.config.debugMode) {
 		ctx.strokeStyle = '#ff0000';
 		ctx.strokeRect(0,0,game.width, game.height);
-		ctx.strokeRect(game.gameBounds.left, game.gameBounds.top, 
-			game.gameBounds.right - game.gameBounds.left, 
+		ctx.strokeRect(game.gameBounds.left, game.gameBounds.top,
+			game.gameBounds.right - game.gameBounds.left,
 			game.gameBounds.bottom - game.gameBounds.top);
 	}
 
@@ -557,11 +574,14 @@ PlayState.prototype.keyUp = function(game, keyCode) {
 PlayState.prototype.fireRocket = function() {
 	//	If we have no last rocket time, or the last rocket time 
 	//	is older than the max rocket rate, we can fire.
-	if(this.lastRocketTime == null || ((new Date()).valueOf() - this.lastRocketTime) > (1000 / this.config.rocketMaxFireRate))
+	if(this.lastRocketTime === null || ((new Date()).valueOf() - this.lastRocketTime) > (1000 / this.config.rocketMaxFireRate))
 	{	
 		//	Add a rocket.
 		this.rockets.push(new Rocket(this.ship.x, this.ship.y - 12, this.config.rocketVelocity));
 		this.lastRocketTime = (new Date()).valueOf();
+
+		//	Play the 'shoot' sound.
+		game.sounds.playSound('shoot');
 	}
 };
 
@@ -584,9 +604,9 @@ PauseState.prototype.draw = function(game, dt, ctx) {
 
 	ctx.font="14px Arial";
 	ctx.fillStyle = '#ffffff';
-	ctx.textBaseline="middle"; 
-	ctx.textAlign="center"; 
-	ctx.fillText("Paused", game.width / 2, game.height/2);		
+	ctx.textBaseline="middle";
+	ctx.textAlign="center";
+	ctx.fillText("Paused", game.width / 2, game.height/2);
 	return;
 };
 
@@ -631,7 +651,7 @@ LevelIntroState.prototype.draw = function(game, dt, ctx) {
 	ctx.fillStyle = '#ffffff';
 	ctx.textBaseline="middle"; 
 	ctx.textAlign="center"; 
-	ctx.fillText("Level " + this.level, game.width / 2, game.height/2);		
+	ctx.fillText("Level " + this.level, game.width / 2, game.height/2);
 	ctx.font="24px Arial";
 	ctx.fillText("Ready in " + this.countdownMessage, game.width / 2, game.height/2 + 36);		
 	return;
@@ -708,4 +728,63 @@ function GameState(updateProc, drawProc, keyDown, keyUp, enter, leave) {
 	this.keyUp = keyUp;
 	this.enter = enter;
 	this.leave = leave;
+};
+
+/*
+
+	Sounds
+
+	The sounds class is used to asynchronously load sounds and allow
+	them to be played.
+
+*/
+function Sounds() {
+
+	//	The audio context.
+	this.audioContext = null;
+
+	//	The actual set of loaded sounds.
+	this.sounds = {};
 }
+
+Sounds.prototype.init = function() {
+
+	// 	Create the audio context, paying attention to webkit browsers.
+	context = window.audioContext || window.webkitAudioContext;
+	this.audioContext = new context();
+};
+
+Sounds.prototype.loadSound = function(name, url) {
+
+	//	Reference to ourselves for closures.
+	var self = this;
+
+	//	Create an entry in the sounds object.
+	this.sounds[name] = null;
+
+	//	Create an asynchronous request for the sound.
+	var req = new XMLHttpRequest();
+	req.open('GET', url, true);
+	req.responseType = 'arraybuffer';
+	req.onload = function() {
+		self.audioContext.decodeAudioData(req.response, function(buffer) {
+			self.sounds[name] = {buffer: buffer};
+		});
+	};
+	req.send();
+};
+
+Sounds.prototype.playSound = function(name) {
+
+	//	If we've not got the sound, don't bother playing it.
+	if(this.sounds[name] === undefined || this.sounds[name] === null) {
+		return;
+	}
+
+	//	Create a sound source, set the buffer, connect to the speakers and
+	//	play the sound.
+	var source = this.audioContext.createBufferSource();
+	source.buffer = this.sounds[name].buffer;
+	source.connect(this.audioContext.destination);
+	source.start(0);
+};
