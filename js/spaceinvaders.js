@@ -105,6 +105,20 @@ Game.prototype.currentState = function() {
 	return this.stateStack.length > 0 ? this.stateStack[this.stateStack.length - 1] : null;
 };
 
+//	Mutes or unmutes the game.
+Game.prototype.mute = function(mute) {
+
+	//	If we've been told to mute, mute.
+	if(mute === true) {
+		this.sounds.mute = true;
+	} else if (mute === false) {
+		this.sounds.mute = false;
+	} else {
+		// Toggle mute instead...
+		this.sounds.mute = this.sounds.mute ? false : true;
+	}
+};
+
 //	The main loop.
 function GameLoop(game) {
 	var currentState = game.currentState();
@@ -749,9 +763,10 @@ function Sounds() {
 
 Sounds.prototype.init = function() {
 
-	// 	Create the audio context, paying attention to webkit browsers.
+	//	Create the audio context, paying attention to webkit browsers.
 	context = window.audioContext || window.webkitAudioContext;
 	this.audioContext = new context();
+	this.mute = false;
 };
 
 Sounds.prototype.loadSound = function(name, url) {
@@ -777,7 +792,7 @@ Sounds.prototype.loadSound = function(name, url) {
 Sounds.prototype.playSound = function(name) {
 
 	//	If we've not got the sound, don't bother playing it.
-	if(this.sounds[name] === undefined || this.sounds[name] === null) {
+	if(this.sounds[name] === undefined || this.sounds[name] === null || this.mute === true) {
 		return;
 	}
 

@@ -47,7 +47,8 @@
 	<div id="info">
 		<p>Move with arrow keys, fire with the space bar. The invaders get faster and drop
 			more bombs as you complete each level!</p>
-		<p><a href="http://github.com/dwmkerr/spaceinvaders">spaceinvaders on github</a> | 
+		<p><a id="muteLink" href="#" onclick="toggleMute()">mute</a> | 
+			<a href="http://github.com/dwmkerr/spaceinvaders">spaceinvaders on github</a> | 
 			<a href="http://www.dwmkerr.com/experiments">more experiments</a> | <a href="http://www.dwmkerr.com">dwmkerr.com</a></p>
 	</div>
 
@@ -93,6 +94,11 @@
 		    	delete pressedKeys[keycode];
 		    game.keyUp(keycode);
 		});
+
+		function toggleMute() {
+			game.mute();
+			document.getElementById("muteLink").innerText = game.sounds.mute ? "unmute" : "mute";
+		}
 	</script>
 	<script src="../analytics.js"></a>
 </body>
