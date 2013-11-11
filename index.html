@@ -39,67 +39,67 @@
 			}
 		</style>
 	</head>
-<body>
-	<div id="starfield"></div>
-	<div id="gamecontainer">
-	<canvas id="gameCanvas"></canvas>
-	</div>
-	<div id="info">
-		<p>Move with arrow keys, fire with the space bar. The invaders get faster and drop
-			more bombs as you complete each level!</p>
-		<p><a id="muteLink" href="#" onclick="toggleMute()">mute</a> | 
-			<a href="http://github.com/dwmkerr/spaceinvaders">spaceinvaders on github</a> | 
-			<a href="http://www.dwmkerr.com/experiments">more experiments</a> | <a href="http://www.dwmkerr.com">dwmkerr.com</a></p>
-	</div>
+	<body>
+		<div id="starfield"></div>
+		<div id="gamecontainer">
+		<canvas id="gameCanvas"></canvas>
+		</div>
+		<div id="info">
+			<p>Move with arrow keys, fire with the space bar. The invaders get faster and drop
+				more bombs as you complete each level!</p>
+			<p><a id="muteLink" href="#" onclick="toggleMute()">mute</a> | 
+				<a href="http://github.com/dwmkerr/spaceinvaders">spaceinvaders on github</a> | 
+				<a href="http://www.dwmkerr.com/experiments">more experiments</a> | <a href="http://www.dwmkerr.com">dwmkerr.com</a></p>
+		</div>
 
-	<script src="js/starfield.js"></script>
-	<script src="js/spaceinvaders.js"></script>
-	<script>
+		<script src="js/starfield.js"></script>
+		<script src="js/spaceinvaders.js"></script>
+		<script>
 
-		//	Create the starfield.
-		var container = document.getElementById('starfield');
-		var starfield = new Starfield();
-		starfield.initialise(container);
-		starfield.start();
+			//	Create the starfield.
+			var container = document.getElementById('starfield');
+			var starfield = new Starfield();
+			starfield.initialise(container);
+			starfield.start();
 
-		//	Setup the canvas.
-		var canvas = document.getElementById("gameCanvas");
-		canvas.width = 800;
-		canvas.height = 600;
+			//	Setup the canvas.
+			var canvas = document.getElementById("gameCanvas");
+			canvas.width = 800;
+			canvas.height = 600;
 
-		//	Create the game.
-		var game = new Game();
+			//	Create the game.
+			var game = new Game();
 
-		//	Initialise it with the game canvas.
-		game.initialise(canvas);
+			//	Initialise it with the game canvas.
+			game.initialise(canvas);
 
-		//	Start the game.
-		game.start();
+			//	Start the game.
+			game.start();
 
-		//	Listen for keyboard events.
-		var pressedKeys = [];
-		window.addEventListener("keydown", function keydown(e) {
-			var keycode = e.which || window.event.keycode;
-		    if(!pressedKeys[keycode])
-		    	pressedKeys[keycode] = true;
-		    //	Supress further processing of left/right/space (37/29/32)
-		    if(keycode == 37 || keycode == 39 || keycode == 32) {
-		    	e.preventDefault();
-		    }
-		    game.keyDown(keycode);
-		});
-		window.addEventListener("keyup", function keydown(e) {
-			var keycode = e.which || window.event.keycode;
-		    if(pressedKeys[keycode])
-		    	delete pressedKeys[keycode];
-		    game.keyUp(keycode);
-		});
+			//	Listen for keyboard events.
+			var pressedKeys = [];
+			window.addEventListener("keydown", function keydown(e) {
+				var keycode = e.which || window.event.keycode;
+			    if(!pressedKeys[keycode])
+			    	pressedKeys[keycode] = true;
+			    //	Supress further processing of left/right/space (37/29/32)
+			    if(keycode == 37 || keycode == 39 || keycode == 32) {
+			    	e.preventDefault();
+			    }
+			    game.keyDown(keycode);
+			});
+			window.addEventListener("keyup", function keydown(e) {
+				var keycode = e.which || window.event.keycode;
+			    if(pressedKeys[keycode])
+			    	delete pressedKeys[keycode];
+			    game.keyUp(keycode);
+			});
 
-		function toggleMute() {
-			game.mute();
-			document.getElementById("muteLink").innerText = game.sounds.mute ? "unmute" : "mute";
-		}
-	</script>
-	<script src="../analytics.js"></a>
-</body>
+			function toggleMute() {
+				game.mute();
+				document.getElementById("muteLink").innerText = game.sounds.mute ? "unmute" : "mute";
+			}
+		</script>
+		<script src="../analytics.js"></script>
+	</body>
 </html>
