@@ -15,6 +15,10 @@ What's there to say? It's Space Invaders in JavaScript! Create the game, give it
 div to draw to, tell it when the keyboard is mashed and that's all you need to 
 add Space Invaders to a wesite.
 
+The Space Invaders Javascript code is all in one file - why is this? Well this is actually
+part of a series of experiments that are used as tutorials, and at this stage we're keeping
+things simple with single files.
+
 Adding Space Invaders to a Web Page
 -----------------------------------
 
