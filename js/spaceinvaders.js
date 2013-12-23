@@ -84,6 +84,24 @@ Game.prototype.initialise = function(gameCanvas) {
     };
 };
 
+Game.prototype.moveToState = function(state) {
+ 
+   //  If we are in a state, leave it.
+   if(this.currentState() && this.currentState().leave) {
+     this.currentState().leave(game);
+     this.stateStack.pop();
+   }
+   
+   //  If there's an enter function for the new state, call it.
+   if(state.enter) {
+     state.enter(game);
+   }
+ 
+   //  Set the current state.
+   this.stateStack.pop();
+   this.stateStack.push(state);
+ };
+
 //  Start the Game.
 Game.prototype.start = function() {
 
@@ -727,7 +745,7 @@ function GameState(updateProc, drawProc, keyDown, keyUp, enter, leave) {
     this.keyUp = keyUp;
     this.enter = enter;
     this.leave = leave;
-};
+}
 
 /*
 
@@ -749,7 +767,7 @@ function Sounds() {
 Sounds.prototype.init = function() {
 
     //  Create the audio context, paying attention to webkit browsers.
-    context = window.audioContext || window.webkitAudioContext;
+    context = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new context();
     this.mute = false;
 };
