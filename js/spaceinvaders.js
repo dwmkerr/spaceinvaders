@@ -789,7 +789,13 @@ Sounds.prototype.loadSound = function(name, url) {
             self.sounds[name] = {buffer: buffer};
         });
     };
-    req.send();
+    try {
+      req.send();
+    } catch(e) {
+      console.log("An exception occured getting sound the sound " + name + " this might be " +
+         "because the page is running from the file system, not a webserver.");
+      console.log(e);
+    }
 };
 
 Sounds.prototype.playSound = function(name) {
