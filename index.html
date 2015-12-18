@@ -65,7 +65,7 @@
             //  Setup the canvas.
             var canvas = document.getElementById("gameCanvas");
             canvas.width = 800;
-            canvas.height = 600;
+            canvas.height = 590;
 
             //  Create the game.
             var game = new Game();
@@ -77,7 +77,7 @@
             game.start();
 
             //  Listen for keyboard events.
-            window.addEventListener("keydown", function keydown(e) {
+            window.addEventListener("keydown", function (e) {
                 var keycode = e.which || window.event.keycode;
                 //  Supress further processing of left/right/space (37/29/32)
                 if(keycode == 37 || keycode == 39 || keycode == 32) {
@@ -85,27 +85,43 @@
                 }
                 game.keyDown(keycode);
             });
-            window.addEventListener("keyup", function keydown(e) {
+            window.addEventListener("keyup", function (e) {
                 var keycode = e.which || window.event.keycode;
                 game.keyUp(keycode);
             });
+
 
             function toggleMute() {
                 game.mute();
                 document.getElementById("muteLink").innerText = game.sounds.mute ? "unmute" : "mute";
             }
+
+            /* touch version */
+            var box2 = canvas;
+            var startx; // starting x coordinate of touch point
+
+            box2.addEventListener('touchstart', function(e){
+                var touchobj = e.changedTouches[0];     // reference first touch point
+                startx = parseInt(touchobj.clientX);// get x coord of touch point
+                e.preventDefault();                 // prevent default click behavior
+                game.keyUp(37); // space
+                game.keyUp(39); // space
+                game.keyDown(32); // space
+            }, false);
+
+            box2.addEventListener('touchmove', function(e){
+                var touchobj = e.changedTouches[0];                 // reference first touch point for this event
+                var dist = parseInt(touchobj.clientX) - startx; // calculate dist traveled by touch point
+                e.preventDefault();
+                if  (dist > 0)
+                    game.keyDown(37); // space
+                else
+                    game.keyDown(39); // space
+            }, false);
+
+
         </script>
         <script type="text/javascript">
-
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-41728580-1']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
 
 </script>
     </body>

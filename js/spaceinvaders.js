@@ -767,7 +767,7 @@ function Sounds() {
 Sounds.prototype.init = function() {
 
     //  Create the audio context, paying attention to webkit browsers.
-    context = window.AudioContext || window.webkitAudioContext;
+    var context = window.AudioContext || window.webkitAudioContext;
     this.audioContext = new context();
     this.mute = false;
 };
@@ -800,7 +800,7 @@ Sounds.prototype.loadSound = function(name, url) {
 
 Sounds.prototype.playSound = function(name) {
 
-    //  If we've not got the sound, don't bother playing it.
+    // If we've not got the sound, don't bother playing it.
     if(this.sounds[name] === undefined || this.sounds[name] === null || this.mute === true) {
         return;
     }
@@ -810,5 +810,6 @@ Sounds.prototype.playSound = function(name) {
     var source = this.audioContext.createBufferSource();
     source.buffer = this.sounds[name].buffer;
     source.connect(this.audioContext.destination);
-    source.start(0);
+    if (source.start) source.start(0);
+    if (source.noteOn) source.noteOn(0);
 };
