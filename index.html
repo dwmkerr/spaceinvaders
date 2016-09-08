@@ -82,13 +82,44 @@
                 //  Supress further processing of left/right/space (37/29/32)
                 if(keycode == 37 || keycode == 39 || keycode == 32) {
                     e.preventDefault();
+                    //alert('Hello');
                 }
                 game.keyDown(keycode);
+
             });
             window.addEventListener("keyup", function keydown(e) {
                 var keycode = e.which || window.event.keycode;
                 game.keyUp(keycode);
             });
+
+            window.addEventListener("touchstart", function (e) {
+                
+                //var touchobj = e.changedTouches[0] // reference first touch point (ie: first finger)
+                //startx = parseInt(touchobj.clientX)
+                //alert(game);
+                var keycode = e.which || window.event.keycode;
+                game.touchstart(keycode);
+            }, false);
+ 
+            window.addEventListener('touchend', function(e){
+                    //alert(e.changedTouches[0].pageX); // alert pageX coordinate of touch point
+                    //alert('you fucked me');
+                var keycode = e.which || window.event.keycode;
+                game.touchend(keycode);
+                }, false);
+            
+            window.addEventListener('touchmove', function(e){
+                    //alert(e.changedTouches[0].pageX); // alert pageX coordinate of touch point
+                    //alert('you fucked me');
+                game.touchmove(e);
+                }, false);
+
+            window.addEventListener('touchcancel', function(e){
+                    //alert(e.changedTouches[0].pageX); // alert pageX coordinate of touch point
+                    //alert('you fucked me');
+                var keycode = e.which || window.event.keycode;
+                game.touchmove(keycode);
+                }, false);              
 
             function toggleMute() {
                 game.mute();

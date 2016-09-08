@@ -195,6 +195,28 @@ Game.prototype.keyDown = function(keyCode) {
         this.currentState().keyDown(this, keyCode);
     }
 };
+var startX = 120;
+
+Game.prototype.touchstart = function(e, keyCode) {
+    startX = parseInt(e.changedTouches[0].clientX);
+    alert('touched me ' + start);
+    this.currentState().fireRocket();
+
+    this.pressedKeys[keyCode] = true;
+    //  Delegate to the current state too.
+    if(this.currentState() && this.currentState().keyDown) {
+        this.currentState().keyDown(this, keyCode);
+    }
+};
+
+Game.prototype.touchend = function(s) {
+    //alert('touched ended');
+};
+
+Game.prototype.touchmove = function(e) {
+    var currentX = parseInt(e.changedTouches[0].clientX);
+    alert('moving...' + startX + " " + currentX);
+};
 
 //  Inform the game a key is up.
 Game.prototype.keyUp = function(keyCode) {
@@ -243,7 +265,7 @@ WelcomeState.prototype.keyDown = function(game, keyCode) {
     if(keyCode == 32) /*space*/ {
         //  Space starts the game.
         game.level = 1;
-        game.score = 0;
+        game.score = 90;
         game.lives = 3;
         game.moveToState(new LevelIntroState(game.level));
     }
@@ -339,6 +361,7 @@ PlayState.prototype.enter = function(game) {
 
 PlayState.prototype.update = function(game, dt) {
     
+
     //  If the left or right arrow keys are pressed, move
     //  the ship. Check this on ticks rather than via a keydown
     //  event for smooth movement, otherwise the ship would move
@@ -351,6 +374,7 @@ PlayState.prototype.update = function(game, dt) {
     }
     if(game.pressedKeys[32]) {
         this.fireRocket();
+        //alert('fire');
     }
 
     //  Keep the ship in bounds.
