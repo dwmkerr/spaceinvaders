@@ -93,33 +93,17 @@
             });
 
             window.addEventListener("touchstart", function (e) {
-                
-                //var touchobj = e.changedTouches[0] // reference first touch point (ie: first finger)
-                //startx = parseInt(touchobj.clientX)
-                //alert(game);
-                var keycode = e.which || window.event.keycode;
-                game.touchstart(keycode);
+                game.touchstart(e);
             }, false);
  
             window.addEventListener('touchend', function(e){
-                    //alert(e.changedTouches[0].pageX); // alert pageX coordinate of touch point
-                    //alert('you fucked me');
-                var keycode = e.which || window.event.keycode;
-                game.touchend(keycode);
-                }, false);
-            
-            window.addEventListener('touchmove', function(e){
-                    //alert(e.changedTouches[0].pageX); // alert pageX coordinate of touch point
-                    //alert('you fucked me');
-                game.touchmove(e);
-                }, false);
+                game.touchend(e);
+                e.preventDefault();
+            }, false);
 
-            window.addEventListener('touchcancel', function(e){
-                    //alert(e.changedTouches[0].pageX); // alert pageX coordinate of touch point
-                    //alert('you fucked me');
-                var keycode = e.which || window.event.keycode;
-                game.touchmove(keycode);
-                }, false);              
+            window.addEventListener('touchmove', function(e){
+                game.touchmove(e.changedTouches[0].pageX);
+            }, false);
 
             function toggleMute() {
                 game.mute();

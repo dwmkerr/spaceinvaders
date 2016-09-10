@@ -195,27 +195,35 @@ Game.prototype.keyDown = function(keyCode) {
         this.currentState().keyDown(this, keyCode);
     }
 };
-var startX = 120;
 
-Game.prototype.touchstart = function(e, keyCode) {
-    startX = parseInt(e.changedTouches[0].clientX);
-    alert('touched me ' + start);
-    this.currentState().fireRocket();
-
-    this.pressedKeys[keyCode] = true;
-    //  Delegate to the current state too.
+Game.prototype.touchstart = function(s) {
     if(this.currentState() && this.currentState().keyDown) {
-        this.currentState().keyDown(this, keyCode);
-    }
+        this.currentState().keyDown(this, KEY_SPACE);
+    }    
 };
 
 Game.prototype.touchend = function(s) {
-    //alert('touched ended');
+    delete this.pressedKeys[KEY_RIGHT];
+    delete this.pressedKeys[KEY_LEFT];
 };
 
-Game.prototype.touchmove = function(e) {
-    var currentX = parseInt(e.changedTouches[0].clientX);
-    alert('moving...' + startX + " " + currentX);
+var previousX = 0;
+var KEY_LEFT = 37;
+var KEY_RIGHT = 39;
+var KEY_SPACE = 32;
+
+Game.prototype.touchmove = function(currentX) {
+    if (previousX > 0){
+        if (currentX > previousX){
+            delete this.pressedKeys[KEY_LEFT];
+            this.pressedKeys[KEY_RIGHT] = true;
+        }
+        else{
+            delete this.pressedKeys[KEY_RIGHT];
+            this.pressedKeys[KEY_LEFT] = true;
+        }
+    }
+    previousX = currentX;
 };
 
 //  Inform the game a key is up.
@@ -262,7 +270,7 @@ WelcomeState.prototype.draw = function(game, dt, ctx) {
 };
 
 WelcomeState.prototype.keyDown = function(game, keyCode) {
-    if(keyCode == 32) /*space*/ {
+    if(keyCode == KEY_SPACE) /*space*/ {
         //  Space starts the game.
         game.level = 1;
         game.score = 90;
@@ -296,7 +304,7 @@ GameOverState.prototype.draw = function(game, dt, ctx) {
 };
 
 GameOverState.prototype.keyDown = function(game, keyCode) {
-    if(keyCode == 32) /*space*/ {
+    if(keyCode == KEY_SPACE) /*space*/ {
         //  Space restarts the game.
         game.lives = 3;
         game.score = 0;
@@ -361,20 +369,18 @@ PlayState.prototype.enter = function(game) {
 
 PlayState.prototype.update = function(game, dt) {
     
-
     //  If the left or right arrow keys are pressed, move
     //  the ship. Check this on ticks rather than via a keydown
     //  event for smooth movement, otherwise the ship would move
     //  more like a text editor caret.
-    if(game.pressedKeys[37]) {
+    if(game.pressedKeys[KEY_LEFT]) {
         this.ship.x -= this.shipSpeed * dt;
     }
-    if(game.pressedKeys[39]) {
+    if(game.pressedKeys[KEY_RIGHT]) {
         this.ship.x += this.shipSpeed * dt;
     }
-    if(game.pressedKeys[32]) {
+    if(game.pressedKeys[KEY_SPACE]) {
         this.fireRocket();
-        //alert('fire');
     }
 
     //  Keep the ship in bounds.
@@ -598,7 +604,7 @@ PlayState.prototype.draw = function(game, dt, ctx) {
 
 PlayState.prototype.keyDown = function(game, keyCode) {
 
-    if(keyCode == 32) {
+    if(keyCode == KEY_SPACE) {
         //  Fire!
         this.fireRocket();
     }
