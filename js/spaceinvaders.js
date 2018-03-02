@@ -343,14 +343,29 @@ PlayState.prototype.update = function(game, dt) {
     //  the ship. Check this on ticks rather than via a keydown
     //  event for smooth movement, otherwise the ship would move
     //  more like a text editor caret.
+  
+    // Left Arrow Key
     if(game.pressedKeys[37]) {
         this.ship.x -= this.shipSpeed * dt;
     }
+    
+    // Right Arrow Key
     if(game.pressedKeys[39]) {
         this.ship.x += this.shipSpeed * dt;
     }
+    // Space Key
     if(game.pressedKeys[32]) {
         this.fireRocket();
+    }
+  
+    // A Key
+    if(game.pressedKeys[65]) {
+        this.ship.x -= this.shipSpeed * dt;
+    }
+    
+    // D Key
+    if(game.pressedKeys[68]) {
+        this.ship.x += this.shipSpeed * dt;
     }
 
     //  Keep the ship in bounds.
