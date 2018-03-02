@@ -367,6 +367,11 @@ PlayState.prototype.update = function(game, dt) {
     if(game.pressedKeys[68]) {
         this.ship.x += this.shipSpeed * dt;
     }
+    
+    // W Key
+    if(game.pressedKeys[87]) {
+        this.fireRocket();
+    }
 
     //  Keep the ship in bounds.
     if(this.ship.x < game.gameBounds.left) {
