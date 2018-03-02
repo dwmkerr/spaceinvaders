@@ -344,37 +344,17 @@ PlayState.prototype.update = function(game, dt) {
     //  event for smooth movement, otherwise the ship would move
     //  more like a text editor caret.
   
-    // Left Arrow Key
-    if(game.pressedKeys[37]) {
+    // Left Movement Keys : A Key / Left Arrow Key
+    if(game.pressedKeys[65] || game.pressedKeys[37]) {
         this.ship.x -= this.shipSpeed * dt;
     }
     
-    // Right Arrow Key
-    if(game.pressedKeys[39]) {
+    // Right Movement Keys: D Key / Right Arrow Key
+    if(game.pressedKeys[68] || game.pressedKeys[39]){
         this.ship.x += this.shipSpeed * dt;
     }
-    // Space Key
-    if(game.pressedKeys[32]) {
-        this.fireRocket();
-    }
-  
-    // A Key
-    if(game.pressedKeys[65]) {
-        this.ship.x -= this.shipSpeed * dt;
-    }
-    
-    // D Key
-    if(game.pressedKeys[68]) {
-        this.ship.x += this.shipSpeed * dt;
-    }
-    
-    // W Key
-    if(game.pressedKeys[87]) {
-        this.fireRocket();
-    }
-    
-    // Up Key
-    if(game.pressedKeys[38]) {
+    // Fire Keys : Space Key / W Key / Up Key
+    if(game.pressedKeys[32] || game.pressedKeys[87] || game.pressedKeys[38]) {
         this.fireRocket();
     }
 
