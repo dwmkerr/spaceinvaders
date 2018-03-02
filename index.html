@@ -79,8 +79,8 @@
             //  Listen for keyboard events.
             window.addEventListener("keydown", function keydown(e) {
                 var keycode = e.which || window.event.keycode;
-                //  Supress further processing of left/right/space (37/29/32)
-                if(keycode == 37 || keycode == 39 || keycode == 32 || keycode == 65 || keycode == 68) {
+                //  Supress further processing of left/right/space/a/d/w (37/29/32/65/68/87)
+                if(keycode == 37 || keycode == 39 || keycode == 32 || keycode == 65 || keycode == 68 || keycode == 87) {
                     e.preventDefault();
                 }
                 game.keyDown(keycode);
