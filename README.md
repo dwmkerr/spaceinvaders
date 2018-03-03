@@ -28,7 +28,7 @@ To add Space Invaders to your site, just add this code.
     <p>The invaders get faster and drop more bombs as you complete each level! | Controls: WASD / Arrow Keys + Space</p>
     <p><a id="muteLink" href="#" onclick="toggleMute()">Mute</a> | 
         <a href="https://github.com/dwmkerr/spaceinvaders">Original Project</a> | 
-        <a href="https://github.com/Prouser123/spaceinvaders">GitHub Project</a> | 
+        <a href="https://github.com/CLSB-Programming/spaceinvaders">GitHub Project</a> | 
         v1.1</p>
 </div>
 <script src="https://clsb-programming.github.io/spaceinvaders/js/starfield.js"></script>
