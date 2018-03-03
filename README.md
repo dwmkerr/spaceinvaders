@@ -2,78 +2,36 @@ Space Invaders
 ==============
 
 The classic Space Invaders game written in JavaScript as a learning exercise.
+
 No jQuery or any other third party libraries, just raw js/html.
 
-See it Live: http://www.dwmkerr.com/experiments/spaceinvaders
+Demo: https://clsb-programming.github.io/spaceinvaders/
 
-![Space Invaders Screenshot](http://www.dwmkerr.com/experiments/spaceinvaders/screenshot.jpg "Space Invaders Screenshot")
+Original Project: https://github.com/dwmkerr/spaceinvaders
 
-Intro
------
+Sounds: http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
 
-What's there to say? It's Space Invaders in JavaScript! Create the game, give it a 
-div to draw to, tell it when the keyboard is mashed and that's all you need to 
-add Space Invaders to a wesite.
+Adding to your site
+-------------------
 
-The Space Invaders Javascript code is all in one file - why is this? Well this is actually
-part of a series of experiments that are used as tutorials, and at this stage we're keeping
-things simple with single files.
-
-Adding Space Invaders to a Web Page
------------------------------------
-
-First, drop the spaceinvaders.js file into the website.
-
-Now add a canvas to the page.
+To add Space Invaders to your site, just add this code.
 
 ````HTML
+<link rel="stylesheet" type="text/css" href="https://clsb-programming.github.io/spaceinvaders/css/core.css">
+<link rel="stylesheet" type="text/css" href="https://clsb-programming.github.io/spaceinvaders/css/typeography.css">
+<link rel="stylesheet" type="text/css" href="https://clsb-programming.github.io/spaceinvaders/css/game.css">
+<div id="starfield"></div>
+<div id="gamecontainer">
 <canvas id="gameCanvas"></canvas>
+</div>
+<div id="info">
+    <p>The invaders get faster and drop more bombs as you complete each level! | Controls: WASD / Arrow Keys + Space</p>
+    <p><a id="muteLink" href="#" onclick="toggleMute()">Mute</a> | 
+        <a href="https://github.com/dwmkerr/spaceinvaders">Original Project</a> | 
+        <a href="https://github.com/CLSB-Programming/spaceinvaders">GitHub Project</a> | 
+        v1.1</p>
+</div>
+<script src="https://clsb-programming.github.io/spaceinvaders/js/starfield.js"></script>
+<script src="https://clsb-programming.github.io/spaceinvaders/js/spaceinvaders.js"></script>
+<script src="https://clsb-programming.github.io/spaceinvaders/js/setup.js"></script>
 ````
-
-Finally, add the Space Invaders game code. You create the game, 
-intialise it with the canvas, start it and make sure you tell
-it when a key is pressed or released. That's it!
-
-````HTML
-<script>
-//	Setup the canvas.
-var canvas = document.getElementById("gameCanvas");
-canvas.width = 800;
-canvas.height = 600;
-
-//	Create the game.
-var game = new Game();
-
-//	Initialise it with the game canvas.
-game.initialise(canvas);
-
-//	Start the game.
-game.start();
-
-//	Listen for keyboard events.
-var pressedKeys = [];
-window.addEventListener("keydown", function keydown(e) {
-	var keycode = window.event.keycode || e.which;
-    if(!pressedKeys[keycode])
-    	pressedKeys[keycode] = true;
-    //	Supress further processing of left/right/space (37/29/32)
-    if(keycode == 37 || keycode == 39 || keycode == 32) {
-    	e.preventDefault();
-    }
-    game.keyDown(keycode);
-});
-window.addEventListener("keyup", function keydown(e) {
-	var keycode = window.event.keycode || e.which;
-    if(pressedKeys[keycode])
-    	delete pressedKeys[keycode];
-    game.keyUp(keycode);
-});
-</script>
-````
-
-References
-----------
-
-Other bits and peices that are uesful can be dropped here.
-
- * The sounds came from http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
