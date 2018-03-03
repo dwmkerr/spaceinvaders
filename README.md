@@ -17,9 +17,9 @@ Adding to your site
 To add Space Invaders to your site, just add this code.
 
 ````HTML
-<link rel="stylesheet" type="text/css" href="css/core.css">
-<link rel="stylesheet" type="text/css" href="css/typeography.css">
-<link rel="stylesheet" type="text/css" href="css/game.css">
+<link rel="stylesheet" type="text/css" href="https://clsb-programming.github.io/spaceinvaders/css/core.css">
+<link rel="stylesheet" type="text/css" href="https://clsb-programming.github.io/spaceinvaders/css/typeography.css">
+<link rel="stylesheet" type="text/css" href="https://clsb-programming.github.io/spaceinvaders/css/game.css">
 <div id="starfield"></div>
 <div id="gamecontainer">
 <canvas id="gameCanvas"></canvas>
@@ -31,7 +31,7 @@ To add Space Invaders to your site, just add this code.
         <a href="https://github.com/Prouser123/spaceinvaders">GitHub Project</a> | 
         v1.1</p>
 </div>
-<script src="js/starfield.js"></script>
-<script src="js/spaceinvaders.js"></script>
-<script src="js/setup.js"></script>
+<script src="https://clsb-programming.github.io/spaceinvaders/js/starfield.js"></script>
+<script src="https://clsb-programming.github.io/spaceinvaders/js/spaceinvaders.js"></script>
+<script src="https://clsb-programming.github.io/spaceinvaders/js/setup.js"></script>
 ````
