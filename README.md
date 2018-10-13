@@ -1,6 +1,8 @@
 Space Invaders
 ==============
 
+[![GuardRails badge](https://badges.production.guardrails.io/dwmkerr/spaceinvaders.svg)](https://www.guardrails.io)
+
 The classic Space Invaders game written in JavaScript as a learning exercise.
 No jQuery or any other third party libraries, just raw js/html.
 
