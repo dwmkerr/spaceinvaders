@@ -42,7 +42,8 @@ function Game() {
         invaderFiles: 10,
         shipSpeed: 120,
         levelDifficultyMultiplier: 0.2,
-        pointsPerInvader: 5
+        pointsPerInvader: 5,
+        limitLevelIncrease: 25
     };
 
     //  All state is in the variables below.
@@ -313,15 +314,17 @@ PlayState.prototype.enter = function(game) {
 
     //  Set the ship speed for this level, as well as invader params.
     var levelMultiplier = this.level * this.config.levelDifficultyMultiplier;
+    var limitLevel = (this.level < this.config.limitLevelIncrease ? this.level : this.config.limitLevelIncrease);
     this.shipSpeed = this.config.shipSpeed;
-    this.invaderInitialVelocity = this.config.invaderInitialVelocity + (levelMultiplier * this.config.invaderInitialVelocity);
+    this.invaderInitialVelocity = this.config.invaderInitialVelocity + 1.5 * (levelMultiplier * this.config.invaderInitialVelocity);
     this.bombRate = this.config.bombRate + (levelMultiplier * this.config.bombRate);
     this.bombMinVelocity = this.config.bombMinVelocity + (levelMultiplier * this.config.bombMinVelocity);
     this.bombMaxVelocity = this.config.bombMaxVelocity + (levelMultiplier * this.config.bombMaxVelocity);
+    this.rocketMaxFireRate = this.config.rocketMaxFireRate + 0.4 * limitLevel;
 
     //  Create the invaders.
-    var ranks = this.config.invaderRanks;
-    var files = this.config.invaderFiles;
+    var ranks = this.config.invaderRanks + 0.1 * limitLevel;
+    var files = this.config.invaderFiles + 0.2 * limitLevel;
     var invaders = [];
     for(var rank = 0; rank < ranks; rank++){
         for(var file = 0; file < files; file++) {
@@ -591,7 +594,7 @@ PlayState.prototype.keyUp = function(game, keyCode) {
 PlayState.prototype.fireRocket = function() {
     //  If we have no last rocket time, or the last rocket time 
     //  is older than the max rocket rate, we can fire.
-    if(this.lastRocketTime === null || ((new Date()).valueOf() - this.lastRocketTime) > (1000 / this.config.rocketMaxFireRate))
+    if(this.lastRocketTime === null || ((new Date()).valueOf() - this.lastRocketTime) > (1000 / this.rocketMaxFireRate))
     {   
         //  Add a rocket.
         this.rockets.push(new Rocket(this.ship.x, this.ship.y - 12, this.config.rocketVelocity));
