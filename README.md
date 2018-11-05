@@ -1,79 +1,72 @@
-Space Invaders
-==============
+# Space Invaders
 
 The classic Space Invaders game written in JavaScript as a learning exercise.
-No jQuery or any other third party libraries, just raw js/html.
 
-See it Live: http://www.dwmkerr.com/experiments/spaceinvaders
+No jQuery or any other third party libraries, just raw JavaScript, CSS and HTML/html.
 
-![Space Invaders Screenshot](http://www.dwmkerr.com/experiments/spaceinvaders/screenshot.jpg "Space Invaders Screenshot")
+See it Live: [www.dwmkerr.com/experiments/spaceinvaders](http://www.dwmkerr.com/experiments/spaceinvaders)
 
-Intro
------
+[![Space Invaders Screenshot](./screenshot.jpg "Space Invaders Screenshot")](http://www.dwmkerr.com/experiments/spaceinvaders)
 
-What's there to say? It's Space Invaders in JavaScript! Create the game, give it a 
-div to draw to, tell it when the keyboard is mashed and that's all you need to 
-add Space Invaders to a wesite.
+## Intro
 
-The Space Invaders Javascript code is all in one file - why is this? Well this is actually
-part of a series of experiments that are used as tutorials, and at this stage we're keeping
-things simple with single files.
+What's there to say? It's Space Invaders in JavaScript!
 
-Adding Space Invaders to a Web Page
------------------------------------
+Create the game, give it a `div` to draw to, tell it when the keyboard is mashed and that's all you need to add Space Invaders to a website.
 
-First, drop the spaceinvaders.js file into the website.
+This is a simple learning exercise, so the JavaScript is deliberate kept all one file. There's no linting, testing, CI, or anything like that. If you want to see such patterns in front-end JavaScript, check out something like [angular-modal-service](https://github.com/dwmkerr/angular-modal-service).
+
+## Adding Space Invaders to a Web Page
+
+First, drop the `spaceinvaders.js` file into the website.
 
 Now add a canvas to the page.
 
-````HTML
+```html
 <canvas id="gameCanvas"></canvas>
-````
+```
 
-Finally, add the Space Invaders game code. You create the game, 
-intialise it with the canvas, start it and make sure you tell
-it when a key is pressed or released. That's it!
+Now add the Space Invaders game code. You create the game, initialise it with the canvas, start it and make sure you tell it when a key is pressed or released. That's it!
 
-````HTML
+```html
 <script>
-//	Setup the canvas.
+//  Setup the canvas.
 var canvas = document.getElementById("gameCanvas");
 canvas.width = 800;
 canvas.height = 600;
 
-//	Create the game.
+//  Create the game.
 var game = new Game();
 
-//	Initialise it with the game canvas.
+//  Initialise it with the game canvas.
 game.initialise(canvas);
 
-//	Start the game.
+//  Start the game.
 game.start();
 
-//	Listen for keyboard events.
+//  Listen for keyboard events.
 var pressedKeys = [];
 window.addEventListener("keydown", function keydown(e) {
-	var keycode = window.event.keycode || e.which;
+  var keycode = window.event.keycode || e.which;
     if(!pressedKeys[keycode])
-    	pressedKeys[keycode] = true;
-    //	Supress further processing of left/right/space (37/29/32)
+      pressedKeys[keycode] = true;
+    //  Supress further processing of left/right/space (37/29/32)
     if(keycode == 37 || keycode == 39 || keycode == 32) {
-    	e.preventDefault();
+      e.preventDefault();
     }
     game.keyDown(keycode);
 });
 window.addEventListener("keyup", function keydown(e) {
-	var keycode = window.event.keycode || e.which;
+  var keycode = window.event.keycode || e.which;
     if(pressedKeys[keycode])
-    	delete pressedKeys[keycode];
+      delete pressedKeys[keycode];
     game.keyUp(keycode);
 });
 </script>
-````
+```
 
-References
-----------
+## References
 
-Other bits and peices that are uesful can be dropped here.
+Other bits and pieces that are useful can be dropped here.
 
- * The sounds came from http://www.classicgaming.cc/classics/spaceinvaders/sounds.php
+- The sounds came from [http://www.classicgaming.cc/classics/spaceinvaders/sounds.php](http://www.classicgaming.cc/classics/spaceinvaders/sounds.php)
