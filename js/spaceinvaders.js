@@ -21,6 +21,11 @@
     ending.
 */
 
+//  Constants for the keyboard.
+var KEY_LEFT = 37;
+var KEY_RIGHT = 39;
+var KEY_SPACE = 32;
+
 //  Creates an instance of the Game class.
 function Game() {
 
@@ -63,6 +68,9 @@ function Game() {
 
     //  All sounds.
     this.sounds = null;
+
+    //  The previous x position, used for touch.
+    this.previousX = 0;
 }
 
 //  Initialis the Game with a canvas.
@@ -196,6 +204,31 @@ Game.prototype.keyDown = function(keyCode) {
     }
 };
 
+Game.prototype.touchstart = function(s) {
+    if(this.currentState() && this.currentState().keyDown) {
+        this.currentState().keyDown(this, KEY_SPACE);
+    }    
+};
+
+Game.prototype.touchend = function(s) {
+    delete this.pressedKeys[KEY_RIGHT];
+    delete this.pressedKeys[KEY_LEFT];
+};
+
+Game.prototype.touchmove = function(e) {
+	var currentX = e.changedTouches[0].pageX;
+    if (this.previousX > 0) {
+        if (currentX > this.previousX) {
+            delete this.pressedKeys[KEY_LEFT];
+            this.pressedKeys[KEY_RIGHT] = true;
+        } else {
+            delete this.pressedKeys[KEY_RIGHT];
+            this.pressedKeys[KEY_LEFT] = true;
+        }
+    }
+    this.previousX = currentX;
+};
+
 //  Inform the game a key is up.
 Game.prototype.keyUp = function(keyCode) {
     delete this.pressedKeys[keyCode];
@@ -236,14 +269,14 @@ WelcomeState.prototype.draw = function(game, dt, ctx) {
     ctx.fillText("Space Invaders", game.width / 2, game.height/2 - 40); 
     ctx.font="16px Arial";
 
-    ctx.fillText("Press 'Space' to start.", game.width / 2, game.height/2); 
+    ctx.fillText("Press 'Space' or touch to start.", game.width / 2, game.height/2); 
 };
 
 WelcomeState.prototype.keyDown = function(game, keyCode) {
-    if(keyCode == 32) /*space*/ {
+    if(keyCode == KEY_SPACE) {
         //  Space starts the game.
         game.level = 1;
-        game.score = 0;
+        game.score = 90;
         game.lives = 3;
         game.moveToState(new LevelIntroState(game.level));
     }
@@ -274,7 +307,7 @@ GameOverState.prototype.draw = function(game, dt, ctx) {
 };
 
 GameOverState.prototype.keyDown = function(game, keyCode) {
-    if(keyCode == 32) /*space*/ {
+    if(keyCode == KEY_SPACE) {
         //  Space restarts the game.
         game.lives = 3;
         game.score = 0;
@@ -343,13 +376,13 @@ PlayState.prototype.update = function(game, dt) {
     //  the ship. Check this on ticks rather than via a keydown
     //  event for smooth movement, otherwise the ship would move
     //  more like a text editor caret.
-    if(game.pressedKeys[37]) {
+    if(game.pressedKeys[KEY_LEFT]) {
         this.ship.x -= this.shipSpeed * dt;
     }
-    if(game.pressedKeys[39]) {
+    if(game.pressedKeys[KEY_RIGHT]) {
         this.ship.x += this.shipSpeed * dt;
     }
-    if(game.pressedKeys[32]) {
+    if(game.pressedKeys[KEY_SPACE]) {
         this.fireRocket();
     }
 
@@ -574,7 +607,7 @@ PlayState.prototype.draw = function(game, dt, ctx) {
 
 PlayState.prototype.keyDown = function(game, keyCode) {
 
-    if(keyCode == 32) {
+    if(keyCode == KEY_SPACE) {
         //  Fire!
         this.fireRocket();
     }

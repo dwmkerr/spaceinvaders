@@ -45,7 +45,7 @@
         <canvas id="gameCanvas"></canvas>
         </div>
         <div id="info">
-            <p>Move with arrow keys, fire with the space bar. The invaders get faster and drop
+            <p>Move with arrow keys or swipe, fire with the space bar or touch. The invaders get faster and drop
                 more bombs as you complete each level!</p>
             <p><a id="muteLink" href="#" onclick="toggleMute()">mute</a> | 
                 <a href="http://github.com/dwmkerr/spaceinvaders">spaceinvaders on github</a> | 
@@ -84,11 +84,24 @@
                     e.preventDefault();
                 }
                 game.keyDown(keycode);
+
             });
             window.addEventListener("keyup", function keydown(e) {
                 var keycode = e.which || window.event.keycode;
                 game.keyUp(keycode);
             });
+
+            window.addEventListener("touchstart", function (e) {
+                game.touchstart(e);
+            }, false);
+ 
+            window.addEventListener('touchend', function(e){
+                game.touchend(e);
+            }, false);
+
+            window.addEventListener('touchmove', function(e){
+                game.touchmove(e);
+            }, false);
 
             function toggleMute() {
                 game.mute();
