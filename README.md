@@ -2,7 +2,7 @@
 
 The classic Space Invaders game written in JavaScript as a learning exercise.
 
-No jQuery or any other third party libraries, just raw JavaScript, CSS and HTML/html.
+No jQuery or any other third party libraries, just raw JavaScript, CSS and HTML.
 
 See it Live: [www.dwmkerr.com/experiments/spaceinvaders](http://www.dwmkerr.com/experiments/spaceinvaders)
 
@@ -26,7 +26,7 @@ Now add a canvas to the page.
 <canvas id="gameCanvas"></canvas>
 ```
 
-Now add the Space Invaders game code. You create the game, initialise it with the canvas, start it and make sure you tell it when a key is pressed or released. That's it!
+Next, add the Space Invaders game code. You create the game, initialise it with the canvas, start it and make sure you tell it when a key is pressed or released. That's it!
 
 ```html
 <script>
