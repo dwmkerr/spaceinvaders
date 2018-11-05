@@ -277,7 +277,7 @@ WelcomeState.prototype.keyDown = function(game, keyCode) {
     if(keyCode == KEY_SPACE) {
         //  Space starts the game.
         game.level = 1;
-        game.score = 90;
+        game.score = 0;
         game.lives = 3;
         game.moveToState(new LevelIntroState(game.level));
     }
