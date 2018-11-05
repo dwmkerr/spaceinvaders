@@ -21,6 +21,11 @@
     ending.
 */
 
+//  Constants for the keyboard.
+var KEY_LEFT = 37;
+var KEY_RIGHT = 39;
+var KEY_SPACE = 32;
+
 //  Creates an instance of the Game class.
 function Game() {
 
@@ -63,6 +68,9 @@ function Game() {
 
     //  All sounds.
     this.sounds = null;
+
+    //  The previous x position, used for touch.
+    this.previousX = 0;
 }
 
 //  Initialis the Game with a canvas.
@@ -207,24 +215,18 @@ Game.prototype.touchend = function(s) {
     delete this.pressedKeys[KEY_LEFT];
 };
 
-var previousX = 0;
-var KEY_LEFT = 37;
-var KEY_RIGHT = 39;
-var KEY_SPACE = 32;
-
 Game.prototype.touchmove = function(e) {
 	var currentX = e.changedTouches[0].pageX;
-    if (previousX > 0){
-        if (currentX > previousX){
+    if (this.previousX > 0) {
+        if (currentX > this.previousX) {
             delete this.pressedKeys[KEY_LEFT];
             this.pressedKeys[KEY_RIGHT] = true;
-        }
-        else{
+        } else {
             delete this.pressedKeys[KEY_RIGHT];
             this.pressedKeys[KEY_LEFT] = true;
         }
     }
-    previousX = currentX;
+    this.previousX = currentX;
 };
 
 //  Inform the game a key is up.
@@ -271,7 +273,7 @@ WelcomeState.prototype.draw = function(game, dt, ctx) {
 };
 
 WelcomeState.prototype.keyDown = function(game, keyCode) {
-    if(keyCode == KEY_SPACE) /*space*/ {
+    if(keyCode == KEY_SPACE) {
         //  Space starts the game.
         game.level = 1;
         game.score = 90;
@@ -305,7 +307,7 @@ GameOverState.prototype.draw = function(game, dt, ctx) {
 };
 
 GameOverState.prototype.keyDown = function(game, keyCode) {
-    if(keyCode == KEY_SPACE) /*space*/ {
+    if(keyCode == KEY_SPACE) {
         //  Space restarts the game.
         game.lives = 3;
         game.score = 0;
