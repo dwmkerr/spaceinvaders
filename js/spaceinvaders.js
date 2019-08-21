@@ -466,7 +466,7 @@ PlayState.prototype.update = function(game, dt) {
     }
     //  If we've hit the bottom, it's game over.
     if(hitBottom) {
-        this.lives = 0;
+        game.lives = 0;
     }
     
     //  Check for rocket/invader collisions.
