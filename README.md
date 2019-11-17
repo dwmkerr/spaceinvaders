@@ -70,3 +70,7 @@ window.addEventListener("keyup", function keydown(e) {
 Other bits and pieces that are useful can be dropped here.
 
 - The sounds came from [http://www.classicgaming.cc/classics/spaceinvaders/sounds.php](http://www.classicgaming.cc/classics/spaceinvaders/sounds.php)
+
+## Publishing
+
+On changes to the `master` branch, the GitHub Pages site will be automatically updated.
