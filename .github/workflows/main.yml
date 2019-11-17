@@ -1,0 +1,20 @@
+name: Publish to GitHub Pages
+on:
+  push:	
+    branches:	
+      - master
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Build and Deploy
+      uses: JamesIves/github-pages-deploy-action@releases/v2
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BASE_BRANCH: master       # Deploy from master...
+        BRANCH: gh-pages          # ...to GitHub pages...
+        BUILD_SCRIPT: make build  # ...run the build action...
+        FOLDER: artifacts/dist    # ...copy the distribution folder.
