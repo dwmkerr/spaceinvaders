@@ -4,9 +4,9 @@ The classic Space Invaders game written in JavaScript as a learning exercise.
 
 No jQuery or any other third party libraries, just raw JavaScript, CSS and HTML.
 
-See it Live: [www.dwmkerr.com/experiments/spaceinvaders](http://www.dwmkerr.com/experiments/spaceinvaders)
+See it Live: [https://dwmkerr.github.io/spaceinvaders/](https://dwmkerr.github.io/spaceinvaders/)
 
-[![Space Invaders Screenshot](./screenshot.jpg "Space Invaders Screenshot")](http://www.dwmkerr.com/experiments/spaceinvaders)
+[![Space Invaders Screenshot](./screenshot.jpg "Space Invaders Screenshot")](https://dwmkerr.github.io/spaceinvaders/)
 
 ## Intro
 
