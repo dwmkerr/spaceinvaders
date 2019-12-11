@@ -9,7 +9,9 @@ See it Live: [https://dwmkerr.github.io/spaceinvaders/](https://dwmkerr.github.i
 [![Space Invaders Screenshot](./screenshot.jpg "Space Invaders Screenshot")](https://dwmkerr.github.io/spaceinvaders/)
 
 ## Intro
+
 [![Run on Repl.it](https://repl.it/badge/github/dwmkerr/spaceinvaders)](https://repl.it/github/dwmkerr/spaceinvaders)
+
 What's there to say? It's Space Invaders in JavaScript!
 
 Create the game, give it a `div` to draw to, tell it when the keyboard is mashed and that's all you need to add Space Invaders to a website.
