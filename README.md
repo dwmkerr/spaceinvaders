@@ -10,7 +10,7 @@ See it Live: [https://dwmkerr.github.io/spaceinvaders/](https://dwmkerr.github.i
 
 ## Intro
 
-[![Run on Repl.it](https://repl.it/badge/github/dwmkerr/spaceinvaders)](https://repl.it/github/dwmkerr/spaceinvaders) [![Buy me a coffee](https://img.shields.io/badge/thanks-buy%20me%20a%20coffee-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/dwmkerr?frequency=one-time)
+[![Run on Repl.it](https://repl.it/badge/github/dwmkerr/spaceinvaders)](https://repl.it/github/dwmkerr/spaceinvaders) [![Donate](https://img.shields.io/badge/thanks-donate-ea4aaa?logo=githubsponsors&logoColor=white)](https://github.com/sponsors/dwmkerr/sponsorships?frequency=one-time&amount=5)
 
 What's there to say? It's Space Invaders in JavaScript!
 
