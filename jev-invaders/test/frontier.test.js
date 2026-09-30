@@ -111,6 +111,15 @@ test('parses text after thinking and computes billed usage', () => {
   });
 });
 
+test('reads a strategic bomb as a boolean', () => {
+  const strategicContract = getContract('strategic');
+  const result = parseFrontierResponse(upstream({
+    text: '{"move":"left","fire":true,"bomb":true}',
+  }), strategicContract);
+
+  assert.equal(result.action.bomb, true);
+});
+
 test('reports billed refusals before inspecting content', () => {
   const result = parseFrontierResponse(upstream({
     stopReason: 'refusal',

@@ -62,6 +62,21 @@ test('applies the inclusive fire threshold', () => {
   );
 });
 
+test('reads a strategic bomb from its noul answer', () => {
+  const strategicContract = getContract('strategic');
+  const strategicUpstream = upstream();
+  strategicUpstream.answers.bomb = { noul: 0.5 };
+
+  assert.equal(
+    parseJevResponse(
+      strategicUpstream,
+      strategicContract,
+      thresholds,
+    ).action.bomb,
+    true,
+  );
+});
+
 test('rejects a move outside the contract', () => {
   assert.deepEqual(parseJevResponse(
     upstream({ move: 'jump' }),

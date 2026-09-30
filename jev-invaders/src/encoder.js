@@ -1,4 +1,9 @@
 const REFLEXIVE_RULES = 'You control a cannon on the bottom row. Invaders march side to side as a block and step down at each wall. If they reach the ground the game is over. Your rocket flies straight up and only one can be in flight at a time. Bombs fall straight down; one that hits you costs a life.';
+const LANES = ['north', 'east', 'south', 'west'];
+
+function strategicRules(rules) {
+  return `You are a cannon at the centre of a cross-shaped arena. Threats advance on you along four lanes: ahead, right, behind and left. Each turn happens in this order: an optional smart bomb destroys every threat in the arena; then you may fire, which destroys the nearest threat in the lane ahead; then you may make a quarter turn left or right; then threats advance, drones one step and runners two. A threat that reaches you costs a life. You have ${rules.smartBombs} smart bombs for the whole game. The siege lasts ${rules.turns} turns. If you survive you score ${rules.points.unusedBomb} per unused smart bomb and ${rules.points.life} per remaining life. Each threat destroyed scores ${rules.points.drone} for a drone or ${rules.points.runner} for a runner.`;
+}
 
 export function offsetWords(dx) {
   if (dx === 0) {
@@ -118,12 +123,66 @@ function encodeReflexive(snapshot, rules) {
   };
 }
 
+function turnWords(turns) {
+  const words = ['zero', 'one', 'two', 'three', 'four', 'five', 'six'];
+  return words[turns];
+}
+
+function reachWords(threat, rules) {
+  const turns = Math.ceil(threat.distance / rules.speed[threat.kind]);
+  if (turns === 1) {
+    return 'hits you at the end of this turn';
+  }
+  if (turns === 2) {
+    return 'hits you next turn';
+  }
+  return `hits you in ${turnWords(turns)} turns`;
+}
+
+function laneWords(snapshot, rules, lane) {
+  const threats = snapshot.threats
+    .filter((threat) => threat.lane === lane)
+    .sort((left, right) => {
+      const leftTurns = Math.ceil(left.distance / rules.speed[left.kind]);
+      const rightTurns = Math.ceil(right.distance / rules.speed[right.kind]);
+      return leftTurns - rightTurns
+        || left.distance - right.distance
+        || left.id - right.id;
+    });
+  if (threats.length === 0) {
+    return 'clear';
+  }
+  return threats
+    .map((threat) => `${threat.kind}, ${reachWords(threat, rules)}`)
+    .join('; ');
+}
+
+function encodeStrategic(snapshot, rules) {
+  const facing = LANES.indexOf(snapshot.facing);
+  const lane = (offset) => LANES[(facing + offset) % LANES.length];
+  const turnsLeft = snapshot.turns - snapshot.turn;
+
+  return {
+    rules: strategicRules(rules),
+    ahead: laneWords(snapshot, rules, lane(0)),
+    right: laneWords(snapshot, rules, lane(1)),
+    behind: laneWords(snapshot, rules, lane(2)),
+    left: laneWords(snapshot, rules, lane(3)),
+    smart_bombs: `${snapshot.smartBombs} of ${snapshot.maxSmartBombs} left`,
+    lives: `${snapshot.lives} of ${snapshot.maxLives}`,
+    siege: turnsLeft === 1 ? 'this is the last turn' : `${turnsLeft} turns left`,
+    threats: snapshot.threats.length === 0
+      ? 'none in the arena'
+      : `${snapshot.threats.length} in the arena`,
+  };
+}
+
 export function encodeState(snapshot, rules) {
   if (snapshot.mode === 'reflexive') {
     return encodeReflexive(snapshot, rules);
   }
   if (snapshot.mode === 'strategic') {
-    throw new Error('strategic encoder not built yet');
+    return encodeStrategic(snapshot, rules);
   }
   throw new Error(`unknown mode: ${snapshot.mode}`);
 }

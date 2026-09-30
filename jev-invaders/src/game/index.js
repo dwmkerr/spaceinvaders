@@ -4,13 +4,19 @@ import {
   snapshot as reflexiveSnapshot,
   step as stepReflexive,
 } from './reflexive.js';
+import {
+  applyAction as applyStrategicAction,
+  createStrategicGame,
+  snapshot as strategicSnapshot,
+  step as stepStrategic,
+} from './strategic.js';
 
 export function createGame(mode, options) {
   if (mode === 'reflexive') {
     return createReflexiveGame(options);
   }
   if (mode === 'strategic') {
-    throw new Error('strategic game not built yet');
+    return createStrategicGame(options);
   }
   throw new Error(`unknown mode: ${mode}`);
 }
@@ -24,7 +30,11 @@ export function gameApi(mode) {
     };
   }
   if (mode === 'strategic') {
-    throw new Error('strategic game not built yet');
+    return {
+      applyAction: applyStrategicAction,
+      step: stepStrategic,
+      snapshot: strategicSnapshot,
+    };
   }
   throw new Error(`unknown mode: ${mode}`);
 }

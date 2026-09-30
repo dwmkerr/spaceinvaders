@@ -2,7 +2,37 @@ const COMMON = 'Each request gives the game state as JSON and a list of question
 
 export function getContract(mode) {
   if (mode === 'strategic') {
-    throw new Error('strategic contract not built yet');
+    return {
+      mode: 'strategic',
+      system: `You are defending a cannon in a turn-based arena game by answering questions about the current game state. ${COMMON}`,
+      questions: {
+        move: {
+          type: 'choice',
+          instructions: 'After this turn\'s shot, which way should the cannon turn so it faces the lane that will need it next?',
+          criteria: {
+            left: 'Quarter turn left: the lane now on your left becomes ahead.',
+            right: 'Quarter turn right: the lane now on your right becomes ahead.',
+            stay: 'Keep facing the lane ahead.',
+          },
+        },
+        fire: {
+          type: 'noul',
+          instructions: 'Fire down the lane ahead this turn?',
+          criteria: {
+            true: 'There is a threat in the lane ahead.',
+            false: 'The lane ahead is clear.',
+          },
+        },
+        bomb: {
+          type: 'noul',
+          instructions: 'Spend one of the scarce smart bombs this turn?',
+          criteria: {
+            true: 'Threats will reach you faster than single shots can stop them, so a bomb now saves a life.',
+            false: 'Single shots can cope for now, so the bomb is worth more later.',
+          },
+        },
+      },
+    };
   }
   if (mode !== 'reflexive') {
     throw new Error(`unknown mode: ${mode}`);

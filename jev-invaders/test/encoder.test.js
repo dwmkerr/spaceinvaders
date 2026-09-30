@@ -4,6 +4,10 @@ import test from 'node:test';
 import { config } from '../src/config.js';
 import { encodeState, offsetWords } from '../src/encoder.js';
 import { createReflexiveGame, snapshot } from '../src/game/reflexive.js';
+import {
+  createStrategicGame,
+  snapshot as strategicSnapshot,
+} from '../src/game/strategic.js';
 
 function freshSnapshot() {
   return snapshot(createReflexiveGame({ seed: 1983 }));
@@ -81,9 +85,46 @@ test('position descriptions do not expose coordinates', () => {
   }
 });
 
-test('strategic encoding is deferred', () => {
-  assert.throws(
-    () => encodeState({ mode: 'strategic' }, {}),
-    new Error('strategic encoder not built yet'),
-  );
+test('encodes a fresh strategic world with relative lanes', () => {
+  const snapshot = strategicSnapshot(createStrategicGame({ seed: 1983 }));
+  const state = encodeState(snapshot, config.strategic);
+
+  assert.deepEqual(Object.keys(state), [
+    'rules',
+    'ahead',
+    'right',
+    'behind',
+    'left',
+    'smart_bombs',
+    'lives',
+    'siege',
+    'threats',
+  ]);
+  assert.ok(Object.values(state).every((value) => typeof value === 'string'));
+  assert.equal(state.ahead, 'drone, hits you in four turns');
+  assert.equal(state.right, 'clear');
+  assert.equal(state.behind, 'clear');
+  assert.equal(state.left, 'runner, hits you in three turns');
+  assert.equal(state.smart_bombs, '3 of 3 left');
+  assert.equal(state.lives, '3 of 3');
+  assert.equal(state.siege, '30 turns left');
+  assert.equal(state.threats, '2 in the arena');
+});
+
+test('strategic lanes follow the cannon facing', () => {
+  const snapshot = strategicSnapshot(createStrategicGame({ seed: 1983 }));
+  snapshot.facing = 'east';
+  const state = encodeState(snapshot, config.strategic);
+
+  assert.equal(state.ahead, 'clear');
+  assert.equal(state.left, 'drone, hits you in four turns');
+});
+
+test('strategic lane descriptions do not expose coordinates', () => {
+  const snapshot = strategicSnapshot(createStrategicGame({ seed: 1983 }));
+  const state = encodeState(snapshot, config.strategic);
+
+  for (const key of ['ahead', 'right', 'behind', 'left']) {
+    assert.doesNotMatch(state[key], /\d/);
+  }
 });
