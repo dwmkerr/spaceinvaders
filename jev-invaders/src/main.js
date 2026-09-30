@@ -37,6 +37,11 @@ const elements = Object.fromEntries(sides.map((side) => [side, {
 }]));
 const startButton = document.querySelector('#start');
 const subtitle = document.querySelector('#subtitle');
+const modeInputs = [...document.querySelectorAll('input[name="mode"]')];
+
+for (const input of modeInputs) {
+  input.checked = input.value === params.mode;
+}
 
 subtitle.textContent = `seed ${params.seed}${
   params.mock ? ' - mock drivers (no API calls)' : ''
@@ -44,6 +49,12 @@ subtitle.textContent = `seed ${params.seed}${
 
 let panels = [];
 let runStarted = false;
+
+function disableModeInputs(disabled) {
+  for (const input of modeInputs) {
+    input.disabled = disabled;
+  }
+}
 
 function failedPanel(mode, seed, label, message) {
   const world = createGame(mode, { seed });
@@ -100,6 +111,7 @@ function buildRun() {
   });
   runStarted = false;
   startButton.textContent = 'Start';
+  disableModeInputs(false);
 }
 
 function startRun() {
@@ -108,12 +120,22 @@ function startRun() {
   }
   runStarted = true;
   startButton.textContent = 'Reset';
+  disableModeInputs(true);
   panels[0].start();
   panels[1].start();
 }
 
 buildRun();
 startButton.addEventListener('click', startRun);
+for (const input of modeInputs) {
+  input.addEventListener('change', () => {
+    if (!input.checked) {
+      return;
+    }
+    params.mode = input.value;
+    buildRun();
+  });
+}
 
 setInterval(() => {
   for (const panel of panels) {
@@ -123,9 +145,11 @@ setInterval(() => {
 }, config.reflexive.tickIntervalMs);
 
 function frame() {
+  let isRunning = false;
   panels.forEach((panel, index) => {
     const side = sides[index];
     const view = panel.view();
+    isRunning ||= view.status === 'running';
     const target = elements[side];
     target.title.textContent = view.label;
     drawPanel(
@@ -136,6 +160,9 @@ function frame() {
     );
     renderHud(target.hud, hudStrings(view));
   });
+  if (runStarted && !isRunning) {
+    disableModeInputs(false);
+  }
   requestAnimationFrame(frame);
 }
 
