@@ -44,9 +44,13 @@ test('creates the left live Jev driver', () => {
   assert.equal(driver.isMock, false);
 });
 
-test('the right live driver is not available yet', () => {
-  assert.throws(
-    () => createDriver('right', { mock: false }),
-    /live driver not built yet/,
-  );
+test('creates the right live Frontier driver', () => {
+  const driver = createDriver('right', {
+    mock: false,
+    mode: 'reflexive',
+    runId: 'setup-test',
+  });
+
+  assert.equal(driver.label, 'Opus 5.5 (claude-opus-5-5)');
+  assert.equal(driver.isMock, false);
 });

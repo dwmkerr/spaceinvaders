@@ -1,4 +1,5 @@
 import { config as defaultConfig } from './config.js';
+import { createFrontierDriver } from './drivers/frontier.js';
 import { createJevDriver } from './drivers/jev.js';
 import { createMockDriver } from './drivers/mock.js';
 
@@ -43,7 +44,13 @@ export function createDriver(side, opts) {
       });
     }
     if (side === 'right') {
-      throw new Error('live driver not built yet');
+      return createFrontierDriver({
+        mode: opts.mode ?? 'reflexive',
+        runId: opts.runId,
+        config: resolvedConfig,
+        fetchFn: opts.fetchFn,
+        now: opts.now,
+      });
     }
     throw new Error(`unknown side: ${side}`);
   }
