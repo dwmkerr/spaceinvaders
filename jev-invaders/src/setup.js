@@ -1,4 +1,5 @@
 import { config as defaultConfig } from './config.js';
+import { createJevDriver } from './drivers/jev.js';
 import { createMockDriver } from './drivers/mock.js';
 
 function numberParam(params, name, fallback) {
@@ -32,7 +33,19 @@ export function parseParams(search) {
 export function createDriver(side, opts) {
   const resolvedConfig = opts.config ?? defaultConfig;
   if (!opts.mock) {
-    throw new Error('live driver not built yet');
+    if (side === 'left') {
+      return createJevDriver({
+        mode: opts.mode ?? 'reflexive',
+        runId: opts.runId,
+        config: resolvedConfig,
+        fetchFn: opts.fetchFn,
+        now: opts.now,
+      });
+    }
+    if (side === 'right') {
+      throw new Error('live driver not built yet');
+    }
+    throw new Error(`unknown side: ${side}`);
   }
 
   if (side === 'left') {

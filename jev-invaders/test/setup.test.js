@@ -33,9 +33,20 @@ test('creates the left mock driver with the configured label', () => {
   assert.equal(driver.isMock, true);
 });
 
-test('live drivers are not available yet', () => {
+test('creates the left live Jev driver', () => {
+  const driver = createDriver('left', {
+    mock: false,
+    mode: 'reflexive',
+    runId: 'setup-test',
+  });
+
+  assert.equal(driver.label, 'Jev (jev-latest)');
+  assert.equal(driver.isMock, false);
+});
+
+test('the right live driver is not available yet', () => {
   assert.throws(
-    () => createDriver('left', { mock: false }),
+    () => createDriver('right', { mock: false }),
     /live driver not built yet/,
   );
 });
