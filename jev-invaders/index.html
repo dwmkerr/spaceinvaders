@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jev-invaders</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>jev-invaders</h1>
+      <p id="subtitle" class="subtitle">seed 1983</p>
+    </header>
+
+    <div class="panels">
+      <section class="panel" id="left-panel">
+        <h2 id="left-title">Jev</h2>
+        <canvas id="left-canvas" width="480" height="480"></canvas>
+        <dl class="hud">
+          <div><dt>score</dt><dd id="left-score">0</dd></div>
+          <div><dt>decisions</dt><dd id="left-decisions">0</dd></div>
+          <div><dt>thinking</dt><dd id="left-thinking">0.0 s</dd></div>
+          <div><dt>cost</dt><dd id="left-cost">$0.00000</dd></div>
+        </dl>
+        <p class="status" id="left-status">ready</p>
+      </section>
+
+      <section class="panel" id="right-panel">
+        <h2 id="right-title">Opus 5.5</h2>
+        <canvas id="right-canvas" width="480" height="480"></canvas>
+        <dl class="hud">
+          <div><dt>score</dt><dd id="right-score">0</dd></div>
+          <div><dt>decisions</dt><dd id="right-decisions">0</dd></div>
+          <div><dt>thinking</dt><dd id="right-thinking">0.0 s</dd></div>
+          <div><dt>cost</dt><dd id="right-cost">$0.00000</dd></div>
+        </dl>
+        <p class="status" id="right-status">ready</p>
+      </section>
+    </div>
+
+    <div class="controls">
+      <fieldset id="mode"></fieldset>
+      <button id="start" type="button">Start</button>
+    </div>
+  </main>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
