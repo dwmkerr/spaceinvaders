@@ -49,3 +49,12 @@ test('mock measures configured latency with a fake clock', async () => {
   assert.equal(result.latencyMs, 125);
   assert.equal(result.costUSD, 0.005);
 });
+
+test('mock reports a confidence inside its configured range', async () => {
+  const driver = createDriver({ confidence: [0.7, 0.9] });
+
+  for (let call = 0; call < 20; call += 1) {
+    const { confidence } = await driver.decide({});
+    assert.ok(confidence >= 0.7 && confidence <= 0.9);
+  }
+});

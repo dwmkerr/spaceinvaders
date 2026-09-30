@@ -20,6 +20,8 @@ export function parseParams(search) {
     mode: params.get('mode') === 'strategic' ? 'strategic' : 'reflexive',
     seed: numberParam(params, 'seed', defaultConfig.seed),
     autostart: params.get('autostart') === '1',
+    // How fast the real-time game runs, as a multiple of its normal clock.
+    speed: Math.min(4, Math.max(0.5, numberParam(params, 'speed', defaultConfig.reflexive.defaultSpeed))),
     mockLatency: {
       jev: numberParam(params, 'jevLatency', defaultConfig.mock.jev.latencyMs),
       frontier: numberParam(
@@ -61,6 +63,7 @@ export function createDriver(side, opts) {
       mode: opts.mode,
       latencyMs: opts.mockLatency?.jev ?? resolvedConfig.mock.jev.latencyMs,
       costPerCallUSD: resolvedConfig.mock.jev.costPerCallUSD,
+      confidence: resolvedConfig.mock.jev.confidence,
       seed: opts.seed,
     });
   }
@@ -70,6 +73,7 @@ export function createDriver(side, opts) {
       mode: opts.mode,
       latencyMs: opts.mockLatency?.frontier ?? resolvedConfig.mock.frontier.latencyMs,
       costPerCallUSD: resolvedConfig.mock.frontier.costPerCallUSD,
+      confidence: resolvedConfig.mock.frontier.confidence,
       seed: opts.seed,
     });
   }

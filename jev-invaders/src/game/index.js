@@ -1,40 +1,22 @@
 import {
-  applyAction as applyReflexiveAction,
+  applyAction,
   createReflexiveGame,
-  snapshot as reflexiveSnapshot,
-  step as stepReflexive,
+  snapshot,
+  step,
 } from './reflexive.js';
-import {
-  applyAction as applyStrategicAction,
-  createStrategicGame,
-  snapshot as strategicSnapshot,
-  step as stepStrategic,
-} from './strategic.js';
 
+// Only the real-time game runs through a panel. The strategic match is driven
+// by src/duel.js, which owns its single shared board.
 export function createGame(mode, options) {
   if (mode === 'reflexive') {
     return createReflexiveGame(options);
   }
-  if (mode === 'strategic') {
-    return createStrategicGame(options);
-  }
-  throw new Error(`unknown mode: ${mode}`);
+  throw new Error(`no panel game for mode: ${mode}`);
 }
 
 export function gameApi(mode) {
   if (mode === 'reflexive') {
-    return {
-      applyAction: applyReflexiveAction,
-      step: stepReflexive,
-      snapshot: reflexiveSnapshot,
-    };
+    return { applyAction, step, snapshot };
   }
-  if (mode === 'strategic') {
-    return {
-      applyAction: applyStrategicAction,
-      step: stepStrategic,
-      snapshot: strategicSnapshot,
-    };
-  }
-  throw new Error(`unknown mode: ${mode}`);
+  throw new Error(`no panel game for mode: ${mode}`);
 }

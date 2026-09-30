@@ -34,23 +34,21 @@ export function parseJevResponse(upstream, contract, thresholds) {
     return { error: 'answers missing', tokens };
   }
 
-  const move = answers.move?.choice;
-  if (!Object.hasOwn(contract.questions.move.criteria, move)) {
-    return { error: `invalid move answer: "${String(move)}"`, tokens };
-  }
-
-  const fire = answers.fire?.noul;
-  if (!validNoul(fire)) {
-    return { error: 'invalid fire answer', tokens };
-  }
-
-  let bomb = false;
-  if (Object.hasOwn(contract.questions, 'bomb')) {
-    const bombAnswer = answers.bomb?.noul;
-    if (!validNoul(bombAnswer)) {
-      return { error: 'invalid bomb answer', tokens };
+  const action = { move: undefined, fire: false, bomb: false };
+  for (const [name, question] of Object.entries(contract.questions)) {
+    if (question.type === 'choice') {
+      const choice = answers[name]?.choice;
+      if (!Object.hasOwn(question.criteria, choice)) {
+        return { error: `invalid ${name} answer: "${String(choice)}"`, tokens };
+      }
+      action[name] = choice;
+    } else {
+      const noul = answers[name]?.noul;
+      if (!validNoul(noul)) {
+        return { error: `invalid ${name} answer`, tokens };
+      }
+      action[name] = noul >= (thresholds[name] ?? 0.5);
     }
-    bomb = bombAnswer >= thresholds.bomb;
   }
 
   if (
@@ -61,11 +59,8 @@ export function parseJevResponse(upstream, contract, thresholds) {
   }
 
   return {
-    action: {
-      move,
-      fire: fire >= thresholds.fire,
-      bomb,
-    },
+    action,
+    confidence: Number.isFinite(answers.move?.confidence) ? answers.move.confidence : null,
     tokens,
   };
 }
@@ -97,8 +92,8 @@ export function createJevDriver({
     label: `${config.models.jev.label} (${model})`,
     isMock: false,
 
-    worstCaseCostUSD(state) {
-      const body = buildJevRequest(state, contract, config);
+    worstCaseCostUSD(state, override) {
+      const body = buildJevRequest(state, override ?? contract, config);
       return worstCaseCostUSD({
         price,
         inputBytes: byteLength(JSON.stringify(body)),
@@ -107,9 +102,12 @@ export function createJevDriver({
       });
     },
 
-    async decide(state) {
+    // `override` replaces the mode's fixed questions for one call, for a game
+    // whose options change from move to move.
+    async decide(state, override) {
       const startedAt = now();
-      const body = buildJevRequest(state, contract, config);
+      const active = override ?? contract;
+      const body = buildJevRequest(state, active, config);
       let response;
       let proxy;
       try {
@@ -132,7 +130,7 @@ export function createJevDriver({
       }
 
       const latencyMs = now() - startedAt;
-      const parsed = parseJevResponse(proxy.upstream, contract, thresholds);
+      const parsed = parseJevResponse(proxy.upstream, active, thresholds);
       let costUSD = typeof proxy.costUSD === 'number' ? proxy.costUSD : 0;
       try {
         costUSD = jevCostUSD(proxy.upstream?.usage, price);
@@ -152,6 +150,7 @@ export function createJevDriver({
       }
       return {
         ...parsed.action,
+        confidence: parsed.confidence,
         costUSD,
         latencyMs,
         tokens: parsed.tokens,

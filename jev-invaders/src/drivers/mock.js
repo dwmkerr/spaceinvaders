@@ -10,6 +10,7 @@ export function createMockDriver({
   latencyMs,
   costPerCallUSD,
   seed,
+  confidence = [0.5, 1],
   sleep = defaultSleep,
   now = defaultNow,
 }) {
@@ -24,7 +25,7 @@ export function createMockDriver({
       return costPerCallUSD;
     },
 
-    async decide() {
+    async decide(state, override) {
       const startedAt = now();
       const callNumber = call;
       call += 1;
@@ -41,7 +42,7 @@ export function createMockDriver({
       }
 
       const result = {};
-      for (const [name, question] of Object.entries(contract.questions)) {
+      for (const [name, question] of Object.entries((override ?? contract).questions)) {
         const draw = rand(seed, callNumber, name);
         if (question.type === 'choice') {
           const options = Object.keys(question.criteria);
@@ -51,8 +52,10 @@ export function createMockDriver({
         }
       }
 
+      const [low, high] = confidence;
       return {
         ...result,
+        confidence: low + rand(seed, callNumber, 'confidence') * (high - low),
         costUSD: costPerCallUSD,
         latencyMs: now() - startedAt,
         tokens: { input: 0, output: 0 },

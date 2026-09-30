@@ -17,14 +17,14 @@ test('priceFor returns known pricing and rejects unknown models', () => {
 test('config contains the reviewed caps and frontier model', () => {
   assert.equal(config.caps.maxSpendUSD.reflexive, 0.5);
   assert.equal(config.caps.maxSpendUSD.strategic, null);
-  assert.equal(config.models.frontier.model, 'claude-opus-5-5');
+  assert.equal(config.models.frontier.model, 'claude-sonnet-5-5');
 });
 
 test('config is deeply frozen', () => {
   assert.ok(Object.isFrozen(config));
   assert.ok(Object.isFrozen(config.models));
-  assert.ok(Object.isFrozen(config.strategic.opening));
-  assert.ok(Object.isFrozen(config.strategic.opening[0]));
+  assert.ok(Object.isFrozen(config.strategic));
+  assert.ok(Object.isFrozen(config.reflexive.formation));
 });
 
 test('.gitignore excludes local configuration and scratch files', async () => {

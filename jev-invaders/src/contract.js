@@ -1,38 +1,30 @@
 const COMMON = 'Each request gives the game state as JSON and a list of questions. Answer each question using only the state. Reply with the JSON object the schema describes and nothing else.';
 
+const COLUMNS = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+
+// The match's one question, offering only the columns that can still take a
+// piece. A model cannot pick an option it is not given, so it cannot make an
+// illegal move: the choice is typed to the legal ones, for both models alike.
+export function strategicContract(openColumns) {
+  return {
+    mode: 'strategic',
+    system: `You are playing Connect Four by answering a question about the current board. ${COMMON}`,
+    questions: {
+      move: {
+        type: 'choice',
+        instructions: 'Pick the column to drop your X into. Take a winning move if there is one. Otherwise block your opponent if they are one move from four in a line. Otherwise build towards a line of your own.',
+        criteria: Object.fromEntries(openColumns.map((column) => [
+          column,
+          `Drop your X into column ${column}.`,
+        ])),
+      },
+    },
+  };
+}
+
 export function getContract(mode) {
   if (mode === 'strategic') {
-    return {
-      mode: 'strategic',
-      system: `You are defending a cannon in a turn-based arena game by answering questions about the current game state. ${COMMON}`,
-      questions: {
-        move: {
-          type: 'choice',
-          instructions: 'After this turn\'s shot, which way should the cannon turn so it faces the lane that will need it next?',
-          criteria: {
-            left: 'Quarter turn left: the lane now on your left becomes ahead.',
-            right: 'Quarter turn right: the lane now on your right becomes ahead.',
-            stay: 'Keep facing the lane ahead.',
-          },
-        },
-        fire: {
-          type: 'noul',
-          instructions: 'Fire down the lane ahead this turn?',
-          criteria: {
-            true: 'There is a threat in the lane ahead.',
-            false: 'The lane ahead is clear.',
-          },
-        },
-        bomb: {
-          type: 'noul',
-          instructions: 'Spend one of the scarce smart bombs this turn?',
-          criteria: {
-            true: 'Threats will reach you faster than single shots can stop them, so a bomb now saves a life.',
-            false: 'Single shots can cope for now, so the bomb is worth more later.',
-          },
-        },
-      },
-    };
+    return strategicContract(COLUMNS);
   }
   if (mode !== 'reflexive') {
     throw new Error(`unknown mode: ${mode}`);
@@ -42,18 +34,25 @@ export function getContract(mode) {
     mode: 'reflexive',
     system: `You are playing Space Invaders by answering questions about the current game state. ${COMMON}`,
     questions: {
+      // Each option says when it is the right answer. Without that, live Jev
+      // chased targets into bombs with a confidence near zero, and its fire
+      // answer sat at 0.5 whatever the state said.
       move: {
         type: 'choice',
-        instructions: 'Move the cannon to survive and line up a shot',
+        instructions: 'Pick the cannon\'s next move. Dodging a bomb matters more than lining up a shot.',
         criteria: {
-          left: 'one column left',
-          right: 'one column right',
-          stay: 'hold position',
+          left: 'Step one column left. Right when a bomb is close above and the left is clear, or when the nearest invader is to the left and no bomb is close on the left.',
+          right: 'Step one column right. Right when a bomb is close above and the right is clear, or when the nearest invader is to the right and no bomb is close on the right.',
+          stay: 'Hold position. Right when the nearest invader is directly above and no bomb is close above, or when both sides have a close bomb.',
         },
       },
       fire: {
         type: 'noul',
-        instructions: 'Fire this tick?',
+        instructions: 'Fire a rocket now?',
+        criteria: {
+          true: 'The rocket is ready and the nearest invader is directly above.',
+          false: 'The rocket is in flight, or the nearest invader is not directly above.',
+        },
       },
     },
   };

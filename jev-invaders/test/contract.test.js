@@ -5,6 +5,7 @@ import {
   buildFrontierPrompt,
   buildSchema,
   getContract,
+  strategicContract,
 } from '../src/contract.js';
 
 test('returns the reflexive decision contract', () => {
@@ -14,16 +15,20 @@ test('returns the reflexive decision contract', () => {
     questions: {
       move: {
         type: 'choice',
-        instructions: 'Move the cannon to survive and line up a shot',
+        instructions: 'Pick the cannon\'s next move. Dodging a bomb matters more than lining up a shot.',
         criteria: {
-          left: 'one column left',
-          right: 'one column right',
-          stay: 'hold position',
+          left: 'Step one column left. Right when a bomb is close above and the left is clear, or when the nearest invader is to the left and no bomb is close on the left.',
+          right: 'Step one column right. Right when a bomb is close above and the right is clear, or when the nearest invader is to the right and no bomb is close on the right.',
+          stay: 'Hold position. Right when the nearest invader is directly above and no bomb is close above, or when both sides have a close bomb.',
         },
       },
       fire: {
         type: 'noul',
-        instructions: 'Fire this tick?',
+        instructions: 'Fire a rocket now?',
+        criteria: {
+          true: 'The rocket is ready and the nearest invader is directly above.',
+          false: 'The rocket is in flight, or the nearest invader is not directly above.',
+        },
       },
     },
   });
@@ -50,13 +55,15 @@ test('builds the exact frontier prompt', () => {
 }
 
 Questions:
-- move: Move the cannon to survive and line up a shot
+- move: Pick the cannon's next move. Dodging a bomb matters more than lining up a shot.
   Choose one of: left, right, stay
-    left: one column left
-    right: one column right
-    stay: hold position
-- fire: Fire this tick?
-  Answer true or false.`,
+    left: Step one column left. Right when a bomb is close above and the left is clear, or when the nearest invader is to the left and no bomb is close on the left.
+    right: Step one column right. Right when a bomb is close above and the right is clear, or when the nearest invader is to the right and no bomb is close on the right.
+    stay: Hold position. Right when the nearest invader is directly above and no bomb is close above, or when both sides have a close bomb.
+- fire: Fire a rocket now?
+  Answer true or false.
+    true: The rocket is ready and the nearest invader is directly above.
+    false: The rocket is in flight, or the nearest invader is not directly above.`,
   );
 });
 
@@ -89,43 +96,22 @@ Questions:
   );
 });
 
-test('returns the strategic decision contract', () => {
-  assert.deepEqual(getContract('strategic'), {
-    mode: 'strategic',
-    system: 'You are defending a cannon in a turn-based arena game by answering questions about the current game state. Each request gives the game state as JSON and a list of questions. Answer each question using only the state. Reply with the JSON object the schema describes and nothing else.',
-    questions: {
-      move: {
-        type: 'choice',
-        instructions: 'After this turn\'s shot, which way should the cannon turn so it faces the lane that will need it next?',
-        criteria: {
-          left: 'Quarter turn left: the lane now on your left becomes ahead.',
-          right: 'Quarter turn right: the lane now on your right becomes ahead.',
-          stay: 'Keep facing the lane ahead.',
-        },
-      },
-      fire: {
-        type: 'noul',
-        instructions: 'Fire down the lane ahead this turn?',
-        criteria: {
-          true: 'There is a threat in the lane ahead.',
-          false: 'The lane ahead is clear.',
-        },
-      },
-      bomb: {
-        type: 'noul',
-        instructions: 'Spend one of the scarce smart bombs this turn?',
-        criteria: {
-          true: 'Threats will reach you faster than single shots can stop them, so a bomb now saves a life.',
-          false: 'Single shots can cope for now, so the bomb is worth more later.',
-        },
-      },
-    },
+test('the strategic contract asks one question: which column to play', () => {
+  const { questions, mode } = getContract('strategic');
+
+  assert.equal(mode, 'strategic');
+  assert.deepEqual(Object.keys(questions), ['move']);
+  assert.equal(questions.move.type, 'choice');
+  assert.deepEqual(Object.keys(questions.move.criteria), ['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+  assert.deepEqual(buildSchema(getContract('strategic')).properties.move, {
+    type: 'string',
+    enum: ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
   });
 });
 
-test('the strategic schema includes a boolean bomb answer', () => {
-  assert.deepEqual(
-    buildSchema(getContract('strategic')).properties.bomb,
-    { type: 'boolean' },
-  );
+test('the match question offers only the columns that are still open', () => {
+  const contract = strategicContract(['b', 'e', 'g']);
+
+  assert.deepEqual(Object.keys(contract.questions.move.criteria), ['b', 'e', 'g']);
+  assert.deepEqual(buildSchema(contract).properties.move.enum, ['b', 'e', 'g']);
 });

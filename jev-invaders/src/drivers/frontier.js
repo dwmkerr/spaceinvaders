@@ -16,6 +16,23 @@ function tokensFor(usage) {
   };
 }
 
+// Jev returns a calibrated confidence with every choice. A chat model has no
+// such figure, so it is asked to state one, which is the comparison the
+// timeline draws.
+const CONFIDENCE_QUESTION = '- confidence: How confident are you in your move answer? Give a probability from 0 to 1.';
+
+function schemaWithConfidence(schema) {
+  return {
+    ...schema,
+    properties: { ...schema.properties, confidence: { type: 'number' } },
+    required: [...schema.required, 'confidence'],
+  };
+}
+
+function confidenceFrom(value) {
+  return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : null;
+}
+
 export function buildFrontierRequest(state, contract, modeConfig, config) {
   const request = {
     model: config.models.frontier.model,
@@ -23,13 +40,13 @@ export function buildFrontierRequest(state, contract, modeConfig, config) {
     system: [contract.system, modeConfig.systemSuffix].filter(Boolean).join(' '),
     messages: [{
       role: 'user',
-      content: buildFrontierPrompt(state, contract),
+      content: `${buildFrontierPrompt(state, contract)}\n${CONFIDENCE_QUESTION}`,
     }],
     output_config: {
       effort: modeConfig.effort,
       format: {
         type: 'json_schema',
-        schema: buildSchema(contract),
+        schema: schemaWithConfidence(buildSchema(contract)),
       },
     },
   };
@@ -110,6 +127,7 @@ function parseResponse(upstream, contract, price) {
       fire: answer.fire,
       bomb: Object.hasOwn(contract.questions, 'bomb') ? answer.bomb : false,
     },
+    confidence: confidenceFrom(answer.confidence),
     ...details,
   };
 }
@@ -143,8 +161,8 @@ export function createFrontierDriver({
     label: `${config.models.frontier.label} (${model})`,
     isMock: false,
 
-    worstCaseCostUSD(state) {
-      const body = buildFrontierRequest(state, contract, modeConfig, config);
+    worstCaseCostUSD(state, override) {
+      const body = buildFrontierRequest(state, override ?? contract, modeConfig, config);
       return worstCaseCostUSD({
         price,
         inputBytes: byteLength(JSON.stringify(body)),
@@ -153,9 +171,12 @@ export function createFrontierDriver({
       });
     },
 
-    async decide(state) {
+    // `override` replaces the mode's fixed questions for one call, for a game
+    // whose options change from move to move.
+    async decide(state, override) {
       const startedAt = now();
-      const body = buildFrontierRequest(state, contract, modeConfig, config);
+      const active = override ?? contract;
+      const body = buildFrontierRequest(state, active, modeConfig, config);
       let response;
       let proxy;
       try {
@@ -178,13 +199,14 @@ export function createFrontierDriver({
       }
 
       const latencyMs = now() - startedAt;
-      const parsed = parseResponse(proxy.upstream, contract, price);
+      const parsed = parseResponse(proxy.upstream, active, price);
       const usage = proxy.upstream?.usage;
       const hasUsage = typeof usage?.input_tokens === 'number'
         && typeof usage?.output_tokens === 'number';
-      const costUSD = hasUsage
-        ? parsed.costUSD
-        : (typeof proxy.costUSD === 'number' ? proxy.costUSD : 0);
+      // Through the Claude CLI the proxy's figure is the one the CLI reported,
+      // which includes cache pricing the page cannot work out from usage alone.
+      const proxyCost = typeof proxy.costUSD === 'number' ? proxy.costUSD : 0;
+      const costUSD = hasUsage && proxy.via !== 'claude-cli' ? parsed.costUSD : proxyCost;
       if (parsed.error) {
         return {
           error: parsed.error,
@@ -195,6 +217,7 @@ export function createFrontierDriver({
       }
       return {
         ...parsed.action,
+        confidence: parsed.confidence,
         costUSD,
         latencyMs,
         tokens: parsed.tokens,

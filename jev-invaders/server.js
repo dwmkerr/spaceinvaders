@@ -1,9 +1,20 @@
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
+import tls from 'node:tls';
 import { fileURLToPath } from 'node:url';
 
 import { config } from './src/config.js';
+import { createClaudeCli } from './src/proxy/claude-cli.js';
 import { createHandler } from './src/proxy/handler.js';
+
+// A corporate TLS proxy re-signs traffic with a root that lives in the OS trust
+// store but not in Node's bundled list, which makes every upstream call fail
+// with SELF_SIGNED_CERT_IN_CHAIN. Trusting the system store as well fixes that
+// without turning certificate checks off.
+tls.setDefaultCACertificates([
+  ...tls.getCACertificates('default'),
+  ...tls.getCACertificates('system'),
+]);
 
 const rootDir = fileURLToPath(new URL('.', import.meta.url));
 const envPath = fileURLToPath(new URL('.env', import.meta.url));
@@ -18,11 +29,14 @@ const keys = {
   anthropicAuthToken: valueOrUndefined(process.env.ANTHROPIC_AUTH_TOKEN),
   anthropicBaseUrl: valueOrUndefined(process.env.ANTHROPIC_BASE_URL),
 };
+const useClaudeCli = process.env.ANTHROPIC_USE_CLAUDE_CLI === '1';
+const claudeCli = useClaudeCli ? createClaudeCli() : undefined;
 const port = Number(process.env.PORT) || config.proxy.port;
 const handle = createHandler({
   config,
   keys,
   fetchFn: fetch,
+  claudeCli,
   rootDir,
   port,
 });
@@ -77,9 +91,19 @@ server.listen(port, config.proxy.host, () => {
   const typesafeStatus = keys.typesafe ? 'set' : 'missing';
   const anthropicStatus = keys.anthropic
     ? 'api key'
-    : keys.anthropicAuthToken ? 'auth token' : 'missing';
+    : keys.anthropicAuthToken
+      ? 'auth token'
+      : useClaudeCli ? 'claude cli login' : 'missing';
   console.log(
     `jev-invaders on http://${config.proxy.host}:${port} `
     + `(typesafe key: ${typesafeStatus}, anthropic credential: ${anthropicStatus})`,
   );
 });
+
+// Warm CLI processes are children of this server, so close them with it.
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => {
+    claudeCli?.shutdown();
+    process.exit(0);
+  });
+}

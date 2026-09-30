@@ -11,9 +11,18 @@ test('parses mock run parameters and latency defaults', () => {
       mode: 'reflexive',
       seed: 42,
       autostart: true,
+      speed: 1.5,
       mockLatency: { jev: 100, frontier: 2500 },
     },
   );
+});
+
+test('game speed comes from the URL and is kept within the slider\'s range', () => {
+  assert.equal(parseParams('?speed=2').speed, 2);
+  assert.equal(parseParams('?speed=99').speed, 4);
+  assert.equal(parseParams('?speed=0').speed, 0.5);
+  assert.equal(parseParams('?speed=fast').speed, 1.5);
+  assert.equal(parseParams('').speed, 1.5);
 });
 
 test('unknown modes fall back to reflexive and mock can be disabled', () => {
@@ -51,6 +60,6 @@ test('creates the right live Frontier driver', () => {
     runId: 'setup-test',
   });
 
-  assert.equal(driver.label, 'Opus 5.5 (claude-opus-5-5)');
+  assert.equal(driver.label, 'Sonnet 5.5 (claude-sonnet-5-5)');
   assert.equal(driver.isMock, false);
 });

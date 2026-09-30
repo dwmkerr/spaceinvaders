@@ -1,30 +1,43 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createRunControl } from '../src/run-control.js';
+import { controlState } from '../src/run-control.js';
 
-test('alternates between starting and building a fresh run', () => {
-  let builds = 0;
-  let starts = 0;
-  const control = createRunControl({
-    build() {
-      builds += 1;
-    },
-    start() {
-      starts += 1;
-    },
+test('a fresh run can only be started', () => {
+  assert.deepEqual(controlState(['idle', 'idle']), {
+    canStart: true,
+    canStop: false,
+    canReset: false,
+    canSwitchMode: true,
   });
+});
 
-  control.click();
-  assert.equal(starts, 1);
-  assert.equal(builds, 0);
-  assert.equal(control.isStarted(), true);
+test('a running run can be stopped or reset but not restarted or switched', () => {
+  assert.deepEqual(controlState(['running', 'running']), {
+    canStart: false,
+    canStop: true,
+    canReset: true,
+    canSwitchMode: false,
+  });
+  // One panel finishing early does not unlock anything while the other plays on.
+  assert.equal(controlState(['over', 'running']).canSwitchMode, false);
+  assert.equal(controlState(['over', 'running']).canStop, true);
+});
 
-  control.click();
-  assert.equal(builds, 1);
-  assert.equal(starts, 1);
-  assert.equal(control.isStarted(), false);
+test('a stopped run can be resumed, reset or switched', () => {
+  assert.deepEqual(controlState(['stopped', 'stopped']), {
+    canStart: true,
+    canStop: false,
+    canReset: true,
+    canSwitchMode: true,
+  });
+});
 
-  control.click();
-  assert.equal(starts, 2);
+test('a finished run can only be reset or switched', () => {
+  assert.deepEqual(controlState(['over', 'capped']), {
+    canStart: false,
+    canStop: false,
+    canReset: true,
+    canSwitchMode: true,
+  });
 });

@@ -172,7 +172,7 @@ test('rebuilds frontier requests and uses an API key', async () => {
   assert.equal(options.headers['anthropic-version'], '2023-06-01');
   assert.equal('authorization' in options.headers, false);
   assert.deepEqual(JSON.parse(options.body), {
-    model: 'claude-opus-5-5',
+    model: 'claude-sonnet-5-5',
     max_tokens: 4096,
     system: 'play',
     messages: [{ role: 'user', content: 'state' }],
@@ -414,4 +414,38 @@ test('health and invalid routes return safe responses', async () => {
   assertNoSecrets(
     health.body + malformed.body + missingRun.body + badMode.body + getApi.body,
   );
+});
+
+test('a dropped connection is retried once with the same request', async () => {
+  let calls = 0;
+  const { handle } = setup({
+    fetchFn: async () => {
+      calls += 1;
+      if (calls === 1) {
+        throw new Error('fetch failed');
+      }
+      return new Response(JSON.stringify({ usage: { input_tokens: 10, output_tokens: 5 } }), {
+        headers: { 'content-type': 'application/json' },
+      });
+    },
+  });
+  const result = await request(handle);
+
+  assert.equal(result.status, 200);
+  assert.equal(calls, 2);
+});
+
+test('two dropped connections in a row are reported, not hidden', async () => {
+  let calls = 0;
+  const { handle } = setup({
+    fetchFn: async () => {
+      calls += 1;
+      throw new Error('fetch failed');
+    },
+  });
+  const result = await request(handle);
+
+  assert.equal(result.status, 502);
+  assert.equal(parsed(result).error, 'upstream unreachable: fetch failed');
+  assert.equal(calls, 2);
 });

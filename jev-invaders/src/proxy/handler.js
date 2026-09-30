@@ -94,7 +94,7 @@ function staticRoute(pathname) {
   return null;
 }
 
-export function createHandler({ config, keys = {}, fetchFn, rootDir, port }) {
+export function createHandler({ config, keys = {}, fetchFn, claudeCli, rootDir, port }) {
   const runLedgers = new Map();
   const processLedger = createLedger(config.caps.maxProcessSpendUSD);
   const allowedHosts = new Set([
@@ -102,6 +102,16 @@ export function createHandler({ config, keys = {}, fetchFn, rootDir, port }) {
     `localhost:${port}`,
   ]);
   const allowedOrigins = new Set(Array.from(allowedHosts, (host) => `http://${host}`));
+  // An API key or token always wins, so the CLI route only applies when the
+  // owner has asked for it and set no other Anthropic credential.
+  const frontierViaCli = Boolean(claudeCli) && !keys.anthropic && !keys.anthropicAuthToken;
+
+  const cliOptions = (body) => ({
+    model: config.models.frontier.model,
+    effort: body.output_config?.effort ?? 'low',
+    system: body.system ?? '',
+    schema: body.output_config?.format?.schema,
+  });
 
   const proxyRequest = async ({ route, request }) => {
     const isJev = route === '/api/jev';
@@ -136,12 +146,15 @@ export function createHandler({ config, keys = {}, fetchFn, rootDir, port }) {
       costForUsage = (usage) => jevCostUSD(usage, price);
       maxOutputTokens = 0;
     } else {
-      if (!keys.anthropic && !keys.anthropicAuthToken) {
+      if (!keys.anthropic && !keys.anthropicAuthToken && !frontierViaCli) {
         return jsonResponse(503, {
           error: 'ANTHROPIC_API_KEY or ANTHROPIC_AUTH_TOKEN is not set in .env',
         });
       }
       if (source.messages === undefined) {
+        return jsonResponse(400, { error: 'invalid request' });
+      }
+      if (frontierViaCli && typeof source.messages?.[0]?.content !== 'string') {
         return jsonResponse(400, { error: 'invalid request' });
       }
       const tokenLimit = Math.max(
@@ -199,18 +212,71 @@ export function createHandler({ config, keys = {}, fetchFn, rootDir, port }) {
 
     const runReservation = runLedger.reserve(reservation);
     const processReservation = processLedger.reserve(reservation);
+
+    if (!isJev && frontierViaCli) {
+      const settle = (usd) => {
+        runLedger.settle(runReservation, usd);
+        processLedger.settle(processReservation, usd);
+      };
+      let result;
+      try {
+        result = await claudeCli.run({
+          ...cliOptions(upstreamBody),
+          prompt: upstreamBody.messages[0].content,
+          timeoutMs,
+        });
+      } catch (error) {
+        settle(0);
+        return jsonResponse(502, { error: `claude cli failed: ${error.message}` });
+      }
+
+      // The CLI reports what the call would cost on the API, which is the
+      // figure the HUD needs even though a subscription login is not billed per call.
+      const costUSD = typeof result?.total_cost_usd === 'number' ? result.total_cost_usd : 0;
+      settle(costUSD);
+      if (result?.is_error || !validObject(result?.structured_output)) {
+        const detail = upstreamExcerpt(String(result?.result ?? result?.subtype ?? 'no structured output'));
+        return jsonResponse(502, { error: `claude cli: ${detail}` });
+      }
+      // Shaped like a Messages API reply so the page's driver needs no second code path.
+      return jsonResponse(200, {
+        upstream: {
+          stop_reason: 'end_turn',
+          content: [{ type: 'text', text: JSON.stringify(result.structured_output) }],
+          usage: {
+            input_tokens: result.usage?.input_tokens ?? 0,
+            output_tokens: result.usage?.output_tokens ?? 0,
+            cache_creation_input_tokens: result.usage?.cache_creation_input_tokens ?? 0,
+            cache_read_input_tokens: result.usage?.cache_read_input_tokens ?? 0,
+          },
+        },
+        costUSD,
+        runSpentUSD: runLedger.spentUSD,
+        via: 'claude-cli',
+        apiMs: result.duration_api_ms,
+      });
+    }
+
+    const callUpstream = () => fetchFn(endpoint, {
+      method: 'POST',
+      headers,
+      body: upstreamText,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
     let upstream;
     try {
-      upstream = await fetchFn(endpoint, {
-        method: 'POST',
-        headers,
-        body: upstreamText,
-        signal: AbortSignal.timeout(timeoutMs),
-      });
-    } catch (error) {
-      runLedger.settle(runReservation, 0);
-      processLedger.settle(processReservation, 0);
-      return jsonResponse(502, { error: `upstream unreachable: ${error.message}` });
+      upstream = await callUpstream();
+    } catch {
+      // A dropped connection is not an answer, and nothing was billed for it,
+      // so ask the same model the same question once more before giving up.
+      // This is not a fallback: no other model and no scripted move steps in.
+      try {
+        upstream = await callUpstream();
+      } catch (error) {
+        runLedger.settle(runReservation, 0);
+        processLedger.settle(processReservation, 0);
+        return jsonResponse(502, { error: `upstream unreachable: ${error.message}` });
+      }
     }
 
     const text = await upstream.text();
@@ -268,8 +334,11 @@ export function createHandler({ config, keys = {}, fetchFn, rootDir, port }) {
         ok: true,
         keys: {
           typesafe: Boolean(keys.typesafe),
-          anthropic: Boolean(keys.anthropic || keys.anthropicAuthToken),
+          anthropic: Boolean(keys.anthropic || keys.anthropicAuthToken || frontierViaCli),
         },
+        frontierVia: keys.anthropic || keys.anthropicAuthToken
+          ? 'api'
+          : (frontierViaCli ? 'claude-cli' : null),
         processSpentUSD: processLedger.spentUSD,
       });
     }
@@ -279,6 +348,17 @@ export function createHandler({ config, keys = {}, fetchFn, rootDir, port }) {
         return jsonResponse(400, { error: 'invalid request' });
       }
       return proxyRequest({ route: pathname, request });
+    }
+    if (method === 'POST' && pathname === '/api/warm') {
+      const request = parseRequestBody(body);
+      if (!request) {
+        return jsonResponse(400, { error: 'invalid request' });
+      }
+      // Only the CLI route has a start-up cost worth paying ahead of time.
+      if (frontierViaCli) {
+        claudeCli.warm(cliOptions(request.body));
+      }
+      return jsonResponse(200, { warmed: frontierViaCli });
     }
     if (pathname.startsWith('/api/')) {
       return jsonResponse(405, { error: 'method not allowed' });

@@ -1,6 +1,7 @@
 import { capBreach, createLedger } from './caps.js';
 import { config as defaultConfig } from './config.js';
 import { encodeState } from './encoder.js';
+import { describeAction } from './feed.js';
 import { createGame, gameApi } from './game/index.js';
 import {
   createStats,
@@ -20,19 +21,40 @@ export function createPanel({
   now = defaultNow,
 }) {
   const api = gameApi(mode);
-  let world = createGame(mode, { seed });
+  let world = createGame(mode, { seed, rules: config[mode] });
   let stats = createStats();
   let status = 'idle';
   let stopReason = null;
   let errorMessage = null;
   let startedAt = null;
+  let stoppedAt = null;
+  let pausedMs = 0;
+  let endedAt = null;
   let inFlight = false;
   let inFlightSince = null;
   let reservationId = null;
   let disposed = false;
   const queue = [];
+  const events = [];
 
   const progress = () => world.tick ?? world.turn;
+
+  // Time the run has actually been playing, so a Stop does not eat into the
+  // wall-clock cap or leave a gap in the timeline.
+  const elapsedMs = () => {
+    if (startedAt === null) {
+      return 0;
+    }
+    const until = status === 'running' ? now() : (endedAt ?? stoppedAt ?? now());
+    return until - startedAt - pausedMs;
+  };
+
+  const recordEvent = (event) => {
+    events.push({ atMs: elapsedMs(), ...event });
+    if (events.length > config.timeline.maxEvents) {
+      events.shift();
+    }
+  };
 
   const statusText = () => {
     if (status === 'idle') {
@@ -41,11 +63,12 @@ export function createPanel({
     if (status === 'running') {
       return 'playing';
     }
+    if (status === 'stopped') {
+      return 'stopped';
+    }
     if (status === 'over') {
-      if (mode === 'strategic' && world.status === 'won') {
-        return 'siege survived';
-      }
-      return 'game over';
+      // Say how it ended: the two ways to lose look alike on a frozen screen.
+      return world.lives <= 0 ? 'game over - hit by a bomb' : 'game over - invaded';
     }
     if (status === 'capped') {
       return `stopped (cap reached) - ${stopReason}`;
@@ -55,6 +78,7 @@ export function createPanel({
 
   const stopForCap = (reason) => {
     if (status === 'running') {
+      endedAt = now();
       status = 'capped';
       stopReason = reason;
     }
@@ -67,7 +91,7 @@ export function createPanel({
     const reason = capBreach({
       ticks: progress(),
       maxTicks: config.caps.maxTicks[mode],
-      elapsedMs: now() - startedAt,
+      elapsedMs: elapsedMs(),
       maxWallClockSec: config.caps.maxWallClockSec,
     });
     if (reason) {
@@ -78,6 +102,7 @@ export function createPanel({
 
   const checkGameOver = () => {
     if (world.status !== 'playing') {
+      endedAt = now();
       status = 'over';
       return true;
     }
@@ -103,14 +128,13 @@ export function createPanel({
       if (result.capped) {
         stopForCap('spend');
       } else {
+        recordEvent({ confidence: null, error: true, label: 'error' });
+        if (status === 'running') {
+          endedAt = now();
+        }
         status = 'error';
         errorMessage = result.error;
       }
-      return;
-    }
-
-    stats = recordDecision(stats, { latencyMs, costUSD });
-    if (status !== 'running') {
       return;
     }
 
@@ -119,16 +143,17 @@ export function createPanel({
       fire: result.fire,
       bomb: result.bomb,
     };
-    if (mode === 'reflexive') {
-      queue.push(action);
-      requestNext();
+    stats = recordDecision(stats, { latencyMs, costUSD });
+    recordEvent({
+      confidence: Number.isFinite(result.confidence) ? result.confidence : null,
+      error: false,
+      label: describeAction(action),
+    });
+    if (status !== 'running') {
       return;
     }
 
-    world = api.step(api.applyAction(world, action));
-    if (!checkGameOver()) {
-      checkCaps();
-    }
+    queue.push(action);
     requestNext();
   };
 
@@ -176,16 +201,31 @@ export function createPanel({
 
   return {
     start() {
-      if (status !== 'idle' || disposed) {
+      if (disposed || (status !== 'idle' && status !== 'stopped')) {
         return;
       }
+      if (status === 'stopped') {
+        pausedMs += now() - stoppedAt;
+        stoppedAt = null;
+      } else {
+        startedAt = now();
+      }
       status = 'running';
-      startedAt = now();
       requestNext();
     },
 
+    // An answer already in flight still lands and is billed, but it is not
+    // applied unless the run has been started again by then.
+    stop() {
+      if (status !== 'running') {
+        return;
+      }
+      stoppedAt = now();
+      status = 'stopped';
+    },
+
     tick() {
-      if (status !== 'running' || mode !== 'reflexive') {
+      if (status !== 'running') {
         return;
       }
       if (queue.length > 0) {
@@ -199,6 +239,8 @@ export function createPanel({
     },
 
     checkCaps,
+
+    status: () => status,
 
     dispose() {
       disposed = true;
@@ -220,6 +262,8 @@ export function createPanel({
         statusText: statusText(),
         inFlightMs: inFlight ? now() - inFlightSince : 0,
         rollingAvgMs: rollingAverageMs(stats, config.hud.rollingWindow),
+        elapsedMs: elapsedMs(),
+        events: events.slice(),
       };
     },
   };

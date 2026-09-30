@@ -17,7 +17,7 @@ const state = { cannon: 'centre' };
 function upstream({ move = 'right', fire = 0.66 } = {}) {
   return {
     answers: {
-      move: { choice: move },
+      move: { choice: move, confidence: 0.74 },
       fire: { noul: fire },
     },
     usage: { input_tokens: 392, output_tokens: 65 },
@@ -47,8 +47,16 @@ test('builds the Jev request in upstream key order', () => {
 test('parses the Jev blog example', () => {
   assert.deepEqual(parseJevResponse(upstream(), contract, thresholds), {
     action: { move: 'right', fire: true, bomb: false },
+    confidence: 0.74,
     tokens: { input: 392, output: 65 },
   });
+});
+
+test('reports no confidence when the choice answer carries none', () => {
+  const bare = upstream();
+  delete bare.answers.move.confidence;
+
+  assert.equal(parseJevResponse(bare, contract, thresholds).confidence, null);
 });
 
 test('applies the inclusive fire threshold', () => {
@@ -59,21 +67,6 @@ test('applies the inclusive fire threshold', () => {
   assert.equal(
     parseJevResponse(upstream({ fire: 0.49 }), contract, thresholds).action.fire,
     false,
-  );
-});
-
-test('reads a strategic bomb from its noul answer', () => {
-  const strategicContract = getContract('strategic');
-  const strategicUpstream = upstream();
-  strategicUpstream.answers.bomb = { noul: 0.5 };
-
-  assert.equal(
-    parseJevResponse(
-      strategicUpstream,
-      strategicContract,
-      thresholds,
-    ).action.bomb,
-    true,
   );
 });
 
@@ -174,4 +167,21 @@ test('reserves the worst-case cost of the encoded request bytes', () => {
   });
 
   assert.equal(driver.worstCaseCostUSD(state), expected);
+});
+
+test('reads a strategic answer as the column to play', () => {
+  const strategicUpstream = {
+    answers: { move: { choice: 'c', confidence: 0.6 } },
+    usage: { input_tokens: 400, output_tokens: 30 },
+  };
+  const result = parseJevResponse(strategicUpstream, getContract('strategic'), thresholds);
+
+  assert.equal(result.action.move, 'c');
+  assert.equal(result.confidence, 0.6);
+
+  strategicUpstream.answers.move.choice = 'z';
+  assert.equal(
+    parseJevResponse(strategicUpstream, getContract('strategic'), thresholds).error,
+    'invalid move answer: "z"',
+  );
 });

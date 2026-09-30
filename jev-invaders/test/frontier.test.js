@@ -51,15 +51,29 @@ test('builds the reflexive Frontier request in upstream key order', () => {
     config,
   );
 
+  const schema = buildSchema(contract);
   assert.deepEqual(request, {
-    model: 'claude-opus-5-5',
+    model: 'claude-sonnet-5-5',
     max_tokens: 2048,
     system: `${contract.system} Answer directly without deliberating.`,
-    messages: [{ role: 'user', content: buildFrontierPrompt(state, contract) }],
+    messages: [{
+      role: 'user',
+      content: `${buildFrontierPrompt(state, contract)}
+- confidence: How confident are you in your move answer? Give a probability from 0 to 1.`,
+    }],
     output_config: {
       effort: 'low',
-      format: { type: 'json_schema', schema: buildSchema(contract) },
+      format: {
+        type: 'json_schema',
+        schema: {
+          ...schema,
+          properties: { ...schema.properties, confidence: { type: 'number' } },
+          required: ['move', 'fire', 'confidence'],
+        },
+      },
     },
+    // Sonnet 5.5's way of turning thinking off; `disabled` is rejected.
+    thinking: { type: 'between_tools' },
   });
   assert.deepEqual(Object.keys(request), [
     'model',
@@ -67,8 +81,9 @@ test('builds the reflexive Frontier request in upstream key order', () => {
     'system',
     'messages',
     'output_config',
+    'thinking',
   ]);
-  for (const key of ['thinking', 'tools', 'tool_choice']) {
+  for (const key of ['tools', 'tool_choice']) {
     assert.equal(Object.hasOwn(request, key), false);
   }
 });
@@ -106,18 +121,18 @@ test('builds a strategic request with adaptive thinking and bomb schema', () => 
 test('parses text after thinking and computes billed usage', () => {
   assert.deepEqual(parseFrontierResponse(upstream(), contract), {
     action: { move: 'left', fire: true, bomb: false },
-    costUSD: 0.006048,
+    confidence: null,
+    costUSD: 0.003024,
     tokens: { input: 812, output: 140 },
   });
 });
 
-test('reads a strategic bomb as a boolean', () => {
-  const strategicContract = getContract('strategic');
-  const result = parseFrontierResponse(upstream({
-    text: '{"move":"left","fire":true,"bomb":true}',
-  }), strategicContract);
+test('reads a self-reported confidence and clamps it to a probability', () => {
+  const parse = (text) => parseFrontierResponse(upstream({ text }), contract);
 
-  assert.equal(result.action.bomb, true);
+  assert.equal(parse('{"move":"left","fire":true,"confidence":0.85}').confidence, 0.85);
+  assert.equal(parse('{"move":"left","fire":true,"confidence":7}').confidence, 1);
+  assert.equal(parse('{"move":"left","fire":true,"confidence":"high"}').confidence, null);
 });
 
 test('reports billed refusals before inspecting content', () => {
@@ -173,7 +188,8 @@ test('posts through the proxy and returns the parsed decision', async () => {
   assert.equal(result.move, 'left');
   assert.equal(result.fire, true);
   assert.equal(result.bomb, false);
-  assert.equal(result.costUSD, 0.006048);
+  assert.equal(result.confidence, null);
+  assert.equal(result.costUSD, 0.003024);
   assert.equal(result.latencyMs, 45);
 });
 
@@ -208,11 +224,19 @@ test('reserves max tokens in the worst-case request cost', () => {
     config,
   );
   const expected = worstCaseCostUSD({
-    price: config.pricing['claude-opus-5-5'],
+    price: config.pricing[config.models.frontier.model],
     inputBytes: byteLength(JSON.stringify(body)),
     overheadTokens: config.caps.reserveOverheadTokens,
     maxOutputTokens: config.frontier.reflexive.maxTokens,
   });
 
   assert.equal(driver.worstCaseCostUSD(state), expected);
+});
+
+test('reads a strategic answer as the column to play', () => {
+  const parse = (text) => parseFrontierResponse(upstream({ text }), getContract('strategic'));
+
+  assert.equal(parse('{"move":"d","confidence":0.7}').action.move, 'd');
+  assert.equal(parse('{"move":"d","confidence":0.7}').confidence, 0.7);
+  assert.equal(parse('{"move":"h"}').error, 'invalid move answer: "h"');
 });

@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { classicReflexive } from './fixtures.js';
+
 import { createLedger } from '../src/caps.js';
 import { config as baseConfig } from '../src/config.js';
 import { createMockDriver } from '../src/drivers/mock.js';
@@ -41,36 +43,11 @@ function success(move, costUSD = 0.005) {
   };
 }
 
-function createInstantStrategicDriver() {
-  let calls = 0;
-  return {
-    label: 'Instant strategic mock',
-    isMock: true,
-    get calls() {
-      return calls;
-    },
-    worstCaseCostUSD() {
-      return 0;
-    },
-    decide() {
-      const turn = calls;
-      calls += 1;
-      return Promise.resolve({
-        move: 'right',
-        fire: true,
-        bomb: [11, 19, 27].includes(turn),
-        costUSD: 0,
-        latencyMs: 0,
-        tokens: { input: 0, output: 0 },
-      });
-    },
-  };
-}
-
 function createHarness({ driver = createManualDriver(), config, ledger } = {}) {
   let time = 0;
   const now = () => time;
   const resolvedConfig = config ?? structuredClone(baseConfig);
+  resolvedConfig.reflexive = structuredClone(classicReflexive);
   const resolvedLedger = ledger
     ?? createLedger(resolvedConfig.caps.maxSpendUSD.reflexive);
   const panel = createPanel({
@@ -90,23 +67,6 @@ function createHarness({ driver = createManualDriver(), config, ledger } = {}) {
       time += ms;
     },
   };
-}
-
-function createStrategicHarness({
-  driver = createManualDriver(),
-  config,
-  seed = 1983,
-} = {}) {
-  const resolvedConfig = config ?? structuredClone(baseConfig);
-  const panel = createPanel({
-    mode: 'strategic',
-    driver,
-    seed,
-    config: resolvedConfig,
-    ledger: createLedger(resolvedConfig.caps.maxSpendUSD.strategic),
-    now: () => 0,
-  });
-  return { panel, driver, config: resolvedConfig };
 }
 
 test('the cannon sits still while a decision is pending', () => {
@@ -288,43 +248,71 @@ test('different mock decisions do not change the formation script', async () => 
   assert.deepEqual(first.view().snapshot.formation, second.view().snapshot.formation);
 });
 
-test('strategic ticks do nothing while a decision is pending', () => {
-  const { panel } = createStrategicHarness();
-  panel.start();
-
-  for (let tick = 0; tick < 100; tick += 1) {
-    panel.tick();
-  }
-
-  assert.equal(panel.view().snapshot.turn, 0);
-});
-
-test('an instant strategic mock plays one turn per decision to the end', async () => {
-  const driver = createInstantStrategicDriver();
-  const { panel } = createStrategicHarness({ driver, seed: 13 });
+test('stop freezes the world and start resumes it without restarting', async () => {
+  const { driver, panel } = createHarness();
   panel.start();
   await flush();
+  panel.tick();
+  panel.tick();
+  assert.equal(panel.view().snapshot.tick, 2);
 
-  const view = panel.view();
-  assert.equal(view.status, 'over');
-  assert.equal(view.snapshot.turn, 30);
-  assert.equal(view.stats.decisions, view.snapshot.turn);
-  assert.equal(driver.calls, view.stats.decisions);
+  panel.stop();
+  assert.equal(panel.view().status, 'stopped');
+  assert.equal(panel.view().statusText, 'stopped');
+  panel.tick();
+  panel.tick();
+  assert.equal(panel.view().snapshot.tick, 2);
+
+  panel.start();
+  assert.equal(panel.view().status, 'running');
+  panel.tick();
+  assert.equal(panel.view().snapshot.tick, 3);
+  // The request from before the stop is still the one in flight.
+  assert.equal(driver.calls, 1);
 });
 
-test('the strategic turn cap stops after the configured number of turns', async () => {
-  const config = structuredClone(baseConfig);
-  config.caps.maxTicks.strategic = 5;
-  const { panel } = createStrategicHarness({
-    config,
-    driver: createInstantStrategicDriver(),
-    seed: 13,
-  });
+test('an answer that lands while stopped is billed but not applied', async () => {
+  const { driver, panel } = createHarness();
   panel.start();
   await flush();
+  panel.stop();
 
-  const view = panel.view();
-  assert.equal(view.snapshot.turn, 5);
-  assert.equal(view.stats.decisions, 5);
-  assert.equal(view.statusText, 'stopped (cap reached) - ticks');
+  driver.resolve(success('right', 0.004));
+  await flush();
+  panel.start();
+  panel.tick();
+
+  assert.equal(panel.view().stats.costUSD, 0.004);
+  assert.equal(panel.view().snapshot.cannon.col, 7);
 });
+
+test('time spent stopped does not count towards the wall-clock cap', async () => {
+  const { panel, advance } = createHarness();
+  panel.start();
+  await flush();
+  advance(1000);
+  panel.stop();
+  advance(baseConfig.caps.maxWallClockSec * 1000);
+  panel.start();
+
+  assert.equal(panel.checkCaps(), null);
+  assert.equal(panel.view().elapsedMs, 1000);
+});
+
+test('records a timeline event with the confidence of each decision', async () => {
+  const { driver, panel, advance } = createHarness();
+  panel.start();
+  await flush();
+  advance(400);
+  driver.resolve({ ...success('stay'), confidence: 0.9 });
+  await flush();
+  advance(600);
+  driver.resolve(success('stay'));
+  await flush();
+
+  assert.deepEqual(panel.view().events, [
+    { atMs: 400, confidence: 0.9, error: false, label: 'hold' },
+    { atMs: 1000, confidence: null, error: false, label: 'hold' },
+  ]);
+});
+

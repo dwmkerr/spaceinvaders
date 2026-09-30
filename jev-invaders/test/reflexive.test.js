@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { classicReflexive } from './fixtures.js';
+
 import {
   applyAction,
   createReflexiveGame,
@@ -9,7 +11,7 @@ import {
 } from '../src/game/reflexive.js';
 
 function createWorld() {
-  return createReflexiveGame({ seed: 1983 });
+  return createReflexiveGame({ seed: 1983, rules: classicReflexive });
 }
 
 function countAlive(world) {
