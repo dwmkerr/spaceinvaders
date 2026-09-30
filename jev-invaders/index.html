@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jev Invaders</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Jev Invaders</h1>
+    </header>
+
+    <nav class="tabs" id="mode" role="tablist" aria-label="Mode">
+      <button type="button" class="tab" role="tab" data-mode="reflexive" aria-selected="true">System 1 - Reflexive</button>
+      <button type="button" class="tab" role="tab" data-mode="strategic" aria-selected="false">System 2 - Strategic</button>
+    </nav>
+
+    <div class="panels">
+      <section class="panel" id="left-panel">
+        <h2><span class="token" aria-hidden="true"></span><span id="left-title">Jev</span><span id="left-spinner" class="spinner" hidden aria-label="thinking"></span></h2>
+        <canvas id="left-canvas" class="game" width="480" height="480"></canvas>
+        <ol id="left-feed" class="feed" aria-label="Recent decisions"></ol>
+        <canvas id="left-timeline" class="timeline" width="480" height="56"></canvas>
+        <dl class="hud">
+          <div><dt id="left-score-label">score</dt><dd id="left-score">0</dd></div>
+          <div><dt>decisions</dt><dd id="left-decisions">0</dd></div>
+          <div><dt>thinking</dt><dd id="left-thinking">0.0 s</dd></div>
+          <div><dt>cost</dt><dd id="left-cost">$0.00000</dd></div>
+        </dl>
+        <p class="status" id="left-status">ready</p>
+      </section>
+
+      <section class="panel board" id="board-panel">
+        <canvas id="board-canvas" class="game" width="480" height="480"></canvas>
+      </section>
+
+      <section class="panel" id="right-panel">
+        <h2><span class="token" aria-hidden="true"></span><span id="right-title">Sonnet 5.5</span><span id="right-spinner" class="spinner" hidden aria-label="thinking"></span></h2>
+        <canvas id="right-canvas" class="game" width="480" height="480"></canvas>
+        <ol id="right-feed" class="feed" aria-label="Recent decisions"></ol>
+        <canvas id="right-timeline" class="timeline" width="480" height="56"></canvas>
+        <dl class="hud">
+          <div><dt id="right-score-label">score</dt><dd id="right-score">0</dd></div>
+          <div><dt>decisions</dt><dd id="right-decisions">0</dd></div>
+          <div><dt>thinking</dt><dd id="right-thinking">0.0 s</dd></div>
+          <div><dt>cost</dt><dd id="right-cost">$0.00000</dd></div>
+        </dl>
+        <p class="status" id="right-status">ready</p>
+      </section>
+    </div>
+
+    <div class="controls">
+      <label class="speed" for="speed">speed <output id="speed-value" for="speed">1.5x</output>
+        <input id="speed" type="range" min="0.5" max="4" step="0.5" value="1.5">
+      </label>
+      <button id="start" type="button">Start</button>
+      <button id="stop" type="button" disabled>Stop</button>
+      <button id="reset" type="button" disabled>Reset</button>
+    </div>
+  </main>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

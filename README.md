@@ -76,3 +76,17 @@ Other bits and pieces that are useful can be dropped here.
 ## Publishing
 
 On changes to the `master` branch, the GitHub Pages site will be automatically updated.
+
+## Jev Invaders
+
+The [`jev-invaders`](./jev-invaders) folder holds a small experiment built for the post [Decision Models - Understanding Jev](https://dwmkerr.com/decision-models-understanding-jev/). It was quickly vibe-coded as a demo, so treat it as one.
+
+Two AI models play the same game side by side. On the left is Jev, TypeSafe's "decision model", which answers typed questions in a fraction of a second. On the right is a frontier chat model, Claude Sonnet, which takes a few seconds to think. Each model is handed the game state as text and asked what to do, and the page keeps count of how fast each one decides and what it costs.
+
+The first mode is this Space Invaders game, played in real time, where a slow answer arrives late:
+
+![Jev and Sonnet playing Space Invaders side by side](./jev-invaders/docs/reflexive.gif)
+
+The second mode is Connect Four, where the two models play each other and looking ahead is what counts:
+
+![Jev and Sonnet playing Connect Four against each other](./jev-invaders/docs/connect-four.gif)

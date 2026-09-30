@@ -1,0 +1,343 @@
+:root {
+  --bg: #faf9f6;
+  --ink: #24292f;
+  --muted: #6e7681;
+  --faint: #d8d5cd;
+  --accent: #1a7f37;
+  --error: #cf222e;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--mono);
+}
+
+main {
+  width: min(100% - 32px, 1010px);
+  margin: 0 auto;
+  padding: 32px 0 48px;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--faint);
+}
+
+.tab {
+  margin-bottom: -1px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  background: transparent;
+  color: var(--muted);
+}
+
+.tab[aria-selected="true"] {
+  border-color: var(--faint);
+  background: var(--bg);
+  color: var(--ink);
+  font-weight: 600;
+  /* Covers the nav's bottom rule so the selected tab joins the content below. */
+  box-shadow: 0 1px 0 var(--bg);
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  margin-bottom: 0;
+  font-size: 1.25rem;
+}
+
+h2 {
+  margin-bottom: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.subtitle,
+.status {
+  color: var(--muted);
+}
+
+.subtitle {
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.panel {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--faint);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.timeline {
+  margin-top: 8px;
+}
+
+/* Recent decisions, newest at the bottom, like a live chat beside a video. */
+.feed {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 5.6em;
+  margin: 8px 0 0;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.feed li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.feed .confidence {
+  color: var(--muted);
+}
+
+.feed .error {
+  color: var(--error);
+}
+
+/* The overlay on a waiting game reads "start", so the game itself is the button. */
+.game.can-start {
+  cursor: pointer;
+}
+
+.speed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.speed input {
+  accent-color: var(--accent);
+}
+
+.speed output {
+  min-width: 2.5em;
+  color: var(--ink);
+}
+
+.hud {
+  margin: 12px 0;
+}
+
+.hud div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.hud dt {
+  color: var(--muted);
+}
+
+.hud dd {
+  margin: 0;
+  text-align: right;
+}
+
+.status {
+  min-height: 1.2em;
+  margin-bottom: 0;
+  font-size: 0.875rem;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+button {
+  padding: 8px 16px;
+  border: 1px solid var(--accent);
+  background: var(--bg);
+  color: var(--accent);
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  border-color: var(--faint);
+  color: var(--faint);
+  cursor: default;
+}
+
+.tab:disabled {
+  border-color: transparent;
+  color: var(--faint);
+}
+
+.tab[aria-selected="true"]:disabled {
+  border-color: var(--faint);
+  color: var(--muted);
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 760px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* A coloured disc beside each model's name. In the match it is that model's
+   token colour, so the name and the pieces on the board belong together. */
+.token {
+  display: none;
+  width: 0.85em;
+  height: 0.85em;
+  margin-right: 8px;
+  border-radius: 50%;
+  vertical-align: -0.05em;
+}
+
+.spinner {
+  display: inline-block;
+  width: 0.85em;
+  height: 0.85em;
+  margin-left: 10px;
+  border: 2px solid var(--faint);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  vertical-align: -0.1em;
+  animation: spin 0.8s linear infinite;
+}
+
+.spinner[hidden] {
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.board {
+  display: none;
+}
+
+/* The match: one board in the middle, a model on each side with its moves below. */
+body[data-mode="strategic"] .panels {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 504px) minmax(0, 1fr);
+  align-items: start;
+}
+
+body[data-mode="strategic"] .board {
+  display: block;
+}
+
+body[data-mode="strategic"] #left-panel .game,
+body[data-mode="strategic"] #right-panel .game,
+body[data-mode="strategic"] .timeline {
+  display: none;
+}
+
+body[data-mode="strategic"] #left-panel,
+body[data-mode="strategic"] #right-panel {
+  display: flex;
+  flex-direction: column;
+  border-top: 4px solid var(--token-colour);
+}
+
+body[data-mode="strategic"] .token {
+  display: inline-block;
+  background: var(--token-colour);
+}
+
+body[data-mode="strategic"] .status {
+  order: 1;
+  margin-bottom: 12px;
+  color: var(--ink);
+}
+
+body[data-mode="strategic"] .hud {
+  order: 2;
+  margin-top: 0;
+}
+
+/* The side columns are narrow, so each figure sits under its label. */
+body[data-mode="strategic"] .hud div {
+  display: block;
+  margin-bottom: 6px;
+}
+
+body[data-mode="strategic"] .hud dd {
+  text-align: left;
+}
+
+body[data-mode="strategic"] .feed {
+  order: 3;
+  height: 14em;
+  border-top: 1px solid var(--faint);
+  padding-top: 8px;
+}
+
+@media (max-width: 760px) {
+  body[data-mode="strategic"] .panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Keep the name, its token and the spinner on one line in the narrow columns. */
+body[data-mode="strategic"] .panel h2 {
+  display: flex;
+  align-items: center;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+body[data-mode="strategic"] .token,
+body[data-mode="strategic"] .spinner {
+  flex: none;
+}
+
+/* The clock speed means nothing in the match, so it is not shown there. */
+body[data-mode="strategic"] .speed {
+  visibility: hidden;
+}
