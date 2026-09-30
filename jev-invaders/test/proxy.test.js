@@ -355,6 +355,44 @@ test('turns upstream failures into safe 502 responses and releases reservations'
   assertNoSecrets(first.body + second.body + thrown.body);
 });
 
+test('reports a non-JSON upstream error and releases its reservation', async () => {
+  let count = 0;
+  const fetchFn = async () => {
+    count += 1;
+    if (count === 1) {
+      return new Response('Unauthorized', { status: 401 });
+    }
+    return new Response(JSON.stringify({
+      usage: { input_tokens: 0, output_tokens: 0 },
+    }));
+  };
+  const body = { max_tokens: 4096, messages: [{ role: 'user', content: 'play' }] };
+  const reservation = frontierReservation(config, body);
+  const handlerConfig = makeConfig({
+    maxSpendUSD: { reflexive: reservation },
+    maxProcessSpendUSD: reservation,
+  });
+  const { handle } = setup({ handlerConfig, fetchFn });
+
+  const first = await request(handle, { body });
+  const second = await request(handle, { body });
+
+  assert.equal(first.status, 502);
+  assert.equal(parsed(first).error, 'upstream 401: Unauthorized');
+  assert.equal(second.status, 200);
+  assert.equal(count, 2);
+});
+
+test('reports a non-JSON successful upstream response', async () => {
+  const { handle } = setup({
+    fetchFn: async () => new Response('not JSON'),
+  });
+  const result = await request(handle);
+
+  assert.equal(result.status, 502);
+  assert.equal(parsed(result).error, 'upstream returned non-JSON');
+});
+
 test('health and invalid routes return safe responses', async () => {
   const { calls, handle } = setup({ keys: { typesafe: 'tk-test' } });
   const health = await request(handle, { method: 'GET', url: '/api/health' });

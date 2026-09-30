@@ -106,7 +106,7 @@ export function step(world) {
     distance: threat.distance - rules.speed[threat.kind],
   }));
   const hits = advanced.filter((threat) => threat.distance <= 0).length;
-  next.lives -= hits;
+  next.lives = Math.max(0, next.lives - hits);
   next.threats = advanced.filter((threat) => threat.distance > 0);
 
   if (next.lives <= 0) {

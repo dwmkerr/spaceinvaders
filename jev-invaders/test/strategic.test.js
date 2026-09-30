@@ -80,6 +80,20 @@ test('threats advance and runners reaching the cannon cause damage', () => {
   );
 });
 
+test('multiple fatal hits clamp lives to zero', () => {
+  const world = {
+    ...worldWith([
+      { id: 1, lane: 'north', distance: 2, kind: 'runner' },
+      { id: 2, lane: 'south', distance: 2, kind: 'runner' },
+    ]),
+    lives: 1,
+  };
+  const next = step(world);
+
+  assert.equal(next.lives, 0);
+  assert.equal(next.status, 'lost');
+});
+
 test('a smart bomb clears and scores every threat', () => {
   const world = worldWith([
     { id: 1, lane: 'north', distance: 4, kind: 'drone' },

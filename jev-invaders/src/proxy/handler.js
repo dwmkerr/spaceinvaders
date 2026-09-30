@@ -73,6 +73,10 @@ function upstreamMessage(json, text) {
     ?? text.slice(0, 300);
 }
 
+function upstreamExcerpt(text) {
+  return text.replace(/\s+/g, ' ').trim().slice(0, 300);
+}
+
 function staticRoute(pathname) {
   if (pathname === '/' || pathname === '/index.html') {
     return { file: 'index.html', type: 'text/html; charset=utf-8' };
@@ -216,6 +220,11 @@ export function createHandler({ config, keys = {}, fetchFn, rootDir, port }) {
     } catch {
       runLedger.settle(runReservation, 0);
       processLedger.settle(processReservation, 0);
+      if (!upstream.ok) {
+        return jsonResponse(502, {
+          error: `upstream ${upstream.status}: ${upstreamExcerpt(text)}`,
+        });
+      }
       return jsonResponse(502, { error: 'upstream returned non-JSON' });
     }
     if (!upstream.ok) {
