@@ -24,6 +24,8 @@ npm start
 
 Then open `http://127.0.0.1:8787/?mock=1`.
 
+Start begins a new run. Reset stops the run and returns both panels to the ready state; press Start again to begin the fresh run.
+
 ## URL parameters
 
 | Parameter | Meaning |

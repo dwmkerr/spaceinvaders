@@ -4,6 +4,7 @@ import { createGame, gameApi } from './game/index.js';
 import { hudStrings, renderHud } from './hud.js';
 import { createPanel } from './panel.js';
 import { drawPanel } from './render.js';
+import { createRunControl } from './run-control.js';
 import { createDriver, parseParams } from './setup.js';
 
 const params = parseParams(window.location.search);
@@ -48,7 +49,6 @@ subtitle.textContent = `seed ${params.seed}${
 }`;
 
 let panels = [];
-let runStarted = false;
 
 function disableModeInputs(disabled) {
   for (const input of modeInputs) {
@@ -109,16 +109,11 @@ function buildRun() {
       return failedPanel(params.mode, params.seed, label, message);
     }
   });
-  runStarted = false;
   startButton.textContent = 'Start';
   disableModeInputs(false);
 }
 
 function startRun() {
-  if (runStarted) {
-    buildRun();
-  }
-  runStarted = true;
   startButton.textContent = 'Reset';
   disableModeInputs(true);
   panels[0].start();
@@ -126,7 +121,8 @@ function startRun() {
 }
 
 buildRun();
-startButton.addEventListener('click', startRun);
+const runControl = createRunControl({ build: buildRun, start: startRun });
+startButton.addEventListener('click', () => runControl.click());
 for (const input of modeInputs) {
   input.addEventListener('change', () => {
     if (!input.checked) {
@@ -145,11 +141,9 @@ setInterval(() => {
 }, config.reflexive.tickIntervalMs);
 
 function frame() {
-  let isRunning = false;
   panels.forEach((panel, index) => {
     const side = sides[index];
     const view = panel.view();
-    isRunning ||= view.status === 'running';
     const target = elements[side];
     target.title.textContent = view.label;
     drawPanel(
@@ -160,14 +154,11 @@ function frame() {
     );
     renderHud(target.hud, hudStrings(view));
   });
-  if (runStarted && !isRunning) {
-    disableModeInputs(false);
-  }
   requestAnimationFrame(frame);
 }
 
 requestAnimationFrame(frame);
 
 if (params.autostart) {
-  startRun();
+  runControl.click();
 }
